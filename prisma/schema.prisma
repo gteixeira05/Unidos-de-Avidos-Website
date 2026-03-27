@@ -1,0 +1,176 @@
+// Schema da Base de Dados - Unidos de Avidos
+// Sistema de Aluguer de Roupas e Gestão da Associação
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// Utilizadores do sistema
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          String    @default("USER") // USER ou ADMIN
+  phone         String?
+  emailNotifContacto Boolean @default(true)
+  emailNotifReservas Boolean @default(true)
+  emailComunicacoesConsent       Boolean   @default(false)
+  emailComunicacoesConsentAt     DateTime?
+  emailComunicacoesConsentVersion String?
+  emailComunicacoesRevokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  reservas      Reserva[]
+  notifications Notification[]
+}
+
+// Códigos de recuperação de password (expira em 15 min)
+model PasswordReset {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  code      String   // Código de 6 dígitos
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Roupas/Fardas para aluguer (por ano/tema)
+model Roupa {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  ano               Int      // Ano da Marcha (ex: 2019, 2022)
+  tema              String   // Tema daquele ano
+  descricao         String?  // Descrição detalhada
+  imagemUrl         String?  // URL da imagem principal
+  quantidadeHomem   Int      @default(0) // Unidades disponíveis (homem)
+  quantidadeMulher Int      @default(0) // Unidades disponíveis (mulher)
+  conjuntoInclui    String?  // O que o conjunto inclui (texto)
+  regrasLavagem     String?  // Regras de lavagem/estado
+  precoAluguer      Float    // Preço fixo de aluguer em euros
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  disponibilidades  Disponibilidade[]
+  reservas          Reserva[]
+  photos            RoupaPhoto[]
+}
+
+model RoupaPhoto {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  roupaId   String   @db.ObjectId
+  roupa     Roupa    @relation(fields: [roupaId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([roupaId, order])
+}
+
+// Disponibilidade por dia - estado do calendário
+model Disponibilidade {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  roupaId   String   @db.ObjectId
+  roupa     Roupa    @relation(fields: [roupaId], references: [id], onDelete: Cascade)
+  data      DateTime // Data do dia
+  estado    String @default("LIVRE") // LIVRE, ALUGADA, MANUTENCAO
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roupaId, data])
+}
+
+// Pedidos de reserva (aguardam aprovação do admin)
+model Reserva {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?  @db.ObjectId // Opcional para pedidos de visitantes
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  roupaId     String   @db.ObjectId
+  roupa       Roupa    @relation(fields: [roupaId], references: [id], onDelete: Cascade)
+  dataInicio  DateTime
+  dataFim     DateTime
+  estado      String   @default("PENDENTE") // PENDENTE, APROVADA, REJEITADA
+  quantidadeHomem   Int  @default(0)
+  quantidadeMulher Int  @default(0)
+  nome        String?  // Nome do solicitante (visitantes)
+  email       String?  // Email do solicitante (visitantes)
+  telefone    String?  // Telefone do solicitante (visitantes)
+  observacoes String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model GalleryYear {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  ano           Int           @unique
+  title         String?
+  coverImageUrl String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  photos        GalleryPhoto[]
+}
+
+model GalleryPhoto {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  yearId    String     @db.ObjectId
+  year      GalleryYear @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  caption   String?
+  order     Int        @default(0)
+  createdAt DateTime   @default(now())
+
+  @@index([yearId, order])
+}
+
+model AdminAuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  actorUserId String?  @db.ObjectId
+  actorEmail  String
+  actorName   String
+  actorRole   String
+  action      String
+  entityType  String
+  entityId    String?
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model AdminLoginChallenge {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  email     String
+  codeHash  String
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, used, createdAt])
+  @@index([email, used, createdAt])
+  @@index([expiresAt])
+}
+

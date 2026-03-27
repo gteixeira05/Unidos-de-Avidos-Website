@@ -4,23 +4,43 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:network": "next dev -H 0.0.0.0",
+    "dev:network:3001": "next dev -H 0.0.0.0 -p 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "npx prisma db seed",
+    "db:push": "npx prisma db push"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "@prisma/client": "^6.19.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.9.0",
+    "date-fns": "^4.1.0",
+    "heic-convert": "^2.1.0",
+    "jose": "^6.2.2",
+    "lucide-react": "^0.577.0",
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "resend": "^6.9.4",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.3.1",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4",
+    "eslint-config-next": "^16.2.1",
+    "prisma": "^6.19.0",
+    "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

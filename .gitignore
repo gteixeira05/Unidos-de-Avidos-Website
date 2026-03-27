@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# RAW de câmara — não são para web nem para o repositório
+public/galeria/**/*.dng
+
+/src/generated/prisma
