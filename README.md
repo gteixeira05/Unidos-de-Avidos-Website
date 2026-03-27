@@ -96,7 +96,7 @@ No painel do Vercel (`Project > Settings > Environment Variables`), definir **ap
 - `CLOUDINARY_URL` (ou `CLOUDINARY_*`) de produção
 - `APP_URL` (domínio final)
 - `CRON_SECRET`
-- `MEDIA_ASSET_PREFIX` (ex.: `unidos-avidos-prod`)
+- `CLOUDINARY_ASSET_FOLDER` (ex.: `unidos-avidos-prod`)
 
 Não colocar segredos de produção em ficheiros locais do projeto.
 

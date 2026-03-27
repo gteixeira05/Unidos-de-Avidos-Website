@@ -335,7 +335,9 @@ export default function AdminRoupaFotosManager({
           <div className="relative w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-xl">
             <div className="border-b border-gray-100 bg-[#00923f]/5 p-5">
               <h2 className="text-lg font-bold text-gray-900">Foto de capa (catálogo)</h2>
-              <p className="mt-1 text-sm text-gray-600">Imagem otimizada no servidor.</p>
+              <p className="mt-1 text-sm text-gray-600">
+                Imagem otimizada no servidor. Em produção (Vercel), use ficheiros até 4 MB.
+              </p>
             </div>
             <form noValidate onSubmit={submitCover} className="p-5">
               {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}

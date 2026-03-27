@@ -10,6 +10,8 @@ import AdminRoupaFotosManager from "@/components/admin/AdminRoupaFotosManager";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
 
+export const dynamic = "force-dynamic";
+
 function WhatsappIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -33,7 +35,7 @@ export default async function RoupaDetalhePage({
   const cookieStore = await cookies();
   const token = cookieStore.get("ua_session")?.value;
   const session = await getSessionFromCookieValue(token);
-  const isAdmin = session?.role === "ADMIN";
+  const isAdmin = session?.role === "ADMIN" || session?.isSuperAdmin === true;
 
   const roupa = await prisma.roupa.findUnique({
     where: { id },

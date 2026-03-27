@@ -7,6 +7,8 @@ import AdminGaleriaAnoControls from "@/components/admin/AdminGaleriaAnoControls"
 import GaleriaRemovePhotoButton from "@/components/admin/GaleriaRemovePhotoButton";
 import GaleriaSetCoverButton from "@/components/admin/GaleriaSetCoverButton";
 
+export const dynamic = "force-dynamic";
+
 export default async function GaleriaAnoPage({
   params,
 }: {
@@ -17,7 +19,7 @@ export default async function GaleriaAnoPage({
   const cookieStore = await cookies();
   const token = cookieStore.get("ua_session")?.value;
   const session = await getSessionFromCookieValue(token);
-  const isAdmin = session?.role === "ADMIN";
+  const isAdmin = session?.role === "ADMIN" || session?.isSuperAdmin === true;
 
   const year = await prisma.galleryYear.findUnique({
     where: { ano: Number(ano) },

@@ -7,11 +7,13 @@ import { getSessionFromCookieValue } from "@/lib/auth";
 import AdminRoupasControls from "@/components/admin/AdminRoupasControls";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
 
+export const dynamic = "force-dynamic";
+
 export default async function AluguerRoupasPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("ua_session")?.value;
   const session = await getSessionFromCookieValue(token);
-  const isAdmin = session?.role === "ADMIN";
+  const isAdmin = session?.role === "ADMIN" || session?.isSuperAdmin === true;
 
   const roupas = await prisma.roupa.findMany({
     orderBy: { ano: "desc" },

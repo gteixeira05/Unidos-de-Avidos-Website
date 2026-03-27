@@ -53,12 +53,23 @@ export async function persistRoupaPhotoFile(
   }
 
   const filename = `${basename}.${outExt}`;
-  const stored = await storeProcessedWebImage(outBuf, outExt, {
-    kind: "roupa",
-    roupaId,
-    filename,
-  });
-  return { imageUrl: stored.url };
+  try {
+    const stored = await storeProcessedWebImage(outBuf, outExt, {
+      kind: "roupa",
+      roupaId,
+      filename,
+    });
+    return { imageUrl: stored.url };
+  } catch {
+    if (process.env.VERCEL) {
+      return {
+        error:
+          "Falha ao guardar imagem em produção. Verifique a configuração Cloudinary (CLOUDINARY_URL ou CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET).",
+        status: 500,
+      };
+    }
+    return { error: "Não foi possível guardar a imagem.", status: 500 };
+  }
 }
 
 export async function persistRoupaCoverFile(

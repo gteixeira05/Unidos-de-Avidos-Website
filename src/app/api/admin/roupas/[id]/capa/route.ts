@@ -30,8 +30,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!cover || cover.size === 0) {
       return Response.json({ error: "Selecione uma imagem para a capa." }, { status: 400 });
     }
+    // Em Vercel, uploads multipart muito grandes podem ser recusados pela plataforma.
+    const MAX_VERCEL_UPLOAD_BYTES = 4 * 1024 * 1024;
+    if (process.env.VERCEL && cover.size > MAX_VERCEL_UPLOAD_BYTES) {
+      return Response.json(
+        { error: "Em produção, a capa deve ter no máximo 4 MB. Comprima a imagem e tente novamente." },
+        { status: 413 }
+      );
+    }
 
-    const result = await persistRoupaCoverFile(roupaId, cover);
+    let result: Awaited<ReturnType<typeof persistRoupaCoverFile>>;
+    try {
+      result = await persistRoupaCoverFile(roupaId, cover);
+    } catch {
+      return Response.json(
+        { error: "Falha ao processar a imagem de capa. Tente novamente com um ficheiro menor." },
+        { status: 500 }
+      );
+    }
     if ("error" in result) {
       return Response.json({ error: result.error }, { status: result.status });
     }

@@ -7,11 +7,13 @@ import AdminGaleriaControls, {
   AdminGaleriaYearCardShell,
 } from "@/components/admin/AdminGaleriaControls";
 
+export const dynamic = "force-dynamic";
+
 export default async function GaleriaPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("ua_session")?.value;
   const session = await getSessionFromCookieValue(token);
-  const isAdmin = session?.role === "ADMIN";
+  const isAdmin = session?.role === "ADMIN" || session?.isSuperAdmin === true;
 
   const years = await prisma.galleryYear.findMany({
     orderBy: { ano: "desc" },
