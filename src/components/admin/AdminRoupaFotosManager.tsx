@@ -28,6 +28,7 @@ export default function AdminRoupaFotosManager({
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverSaving, setCoverSaving] = useState(false);
   const [clearingCover, setClearingCover] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const coverRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -139,15 +140,19 @@ export default function AdminRoupaFotosManager({
     }
   }
 
-  async function removeCoverCatalog() {
+  function openConfirmRemoveCover() {
     if (!coverUrl) return;
-    if (
-      !confirm(
-        "Remover a foto de capa do catálogo? Depois pode definir uma nova (upload ou foto da galeria)."
-      )
-    ) {
-      return;
-    }
+    setError("");
+    setConfirmClearOpen(true);
+  }
+
+  function closeConfirmRemoveCover() {
+    setConfirmClearOpen(false);
+  }
+
+  async function confirmRemoveCoverCatalog() {
+    if (!coverUrl) return;
+    setConfirmClearOpen(false);
     setClearingCover(true);
     setError("");
     try {
@@ -212,7 +217,7 @@ export default function AdminRoupaFotosManager({
         A <strong>capa</strong> aparece no catálogo. As outras fotos aparecem na página desta roupa.
       </p>
 
-      {error && !addOpen && !coverOpen ? (
+      {error && !addOpen && !coverOpen && !confirmClearOpen ? (
         <p className="mt-2 text-sm text-red-700">{error}</p>
       ) : null}
 
@@ -228,7 +233,7 @@ export default function AdminRoupaFotosManager({
         {coverUrl ? (
           <button
             type="button"
-            onClick={() => void removeCoverCatalog()}
+            onClick={openConfirmRemoveCover}
             disabled={clearingCover}
             className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
           >
@@ -408,6 +413,51 @@ export default function AdminRoupaFotosManager({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmClearOpen && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="confirm-clear-title"
+          aria-describedby="confirm-clear-desc"
+        >
+          <button
+            type="button"
+            onClick={closeConfirmRemoveCover}
+            className="absolute inset-0 bg-black/40"
+            aria-label="Fechar"
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-xl">
+            <div className="border-b border-red-100 bg-red-50/80 p-5">
+              <h2 id="confirm-clear-title" className="text-lg font-bold text-gray-900">
+                Remover capa do catálogo?
+              </h2>
+              <p id="confirm-clear-desc" className="mt-2 text-sm text-gray-700">
+                A imagem deixa de aparecer no catálogo de aluguer. Pode definir uma nova capa
+                depois (upload ou escolhendo uma foto da galeria desta roupa).
+              </p>
+            </div>
+            <div className="flex gap-2 p-5">
+              <button
+                type="button"
+                onClick={closeConfirmRemoveCover}
+                className="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-200"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmRemoveCoverCatalog()}
+                disabled={clearingCover}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {clearingCover ? "A remover…" : "Remover capa"}
+              </button>
+            </div>
           </div>
         </div>
       )}
