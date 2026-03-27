@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { isSuperAdminEmail } from "@/lib/super-admin";
 
 type AdminTab = "reservas" | "alugadas" | "utilizadores" | "logs";
 
@@ -29,6 +30,18 @@ type UserItem = {
   role: "USER" | "ADMIN";
   createdAt: string;
 };
+
+function userRoleLabel(u: UserItem): string {
+  return isSuperAdminEmail(u.email) ? "SUPER_ADMIN" : u.role;
+}
+
+function userRoleBadgeClass(u: UserItem): string {
+  if (isSuperAdminEmail(u.email)) return "bg-amber-100 text-amber-900";
+  return u.role === "ADMIN"
+    ? "bg-[#00923f]/10 text-[#00923f]"
+    : "bg-gray-100 text-gray-700";
+}
+
 type ConfirmState =
   | { open: false }
   | { open: true; user: UserItem; targetRole: "USER" | "ADMIN" };
@@ -813,17 +826,17 @@ function AdminPageInner() {
                         <p className="truncate text-sm text-gray-600">{u.email}</p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                          u.role === "ADMIN"
-                            ? "bg-[#00923f]/10 text-[#00923f]"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${userRoleBadgeClass(u)}`}
                       >
-                        {u.role}
+                        {userRoleLabel(u)}
                       </span>
                     </div>
                     <div className="mt-3 flex gap-2">
-                      {u.role === "ADMIN" ? (
+                      {isSuperAdminEmail(u.email) ? (
+                        <span className="w-full rounded-lg bg-gray-50 px-3 py-2 text-center text-xs text-gray-600">
+                          Super Admin (email)
+                        </span>
+                      ) : u.role === "ADMIN" ? (
                         <button
                           type="button"
                           onClick={() => openConfirm(u, "USER")}
@@ -845,7 +858,11 @@ function AdminPageInner() {
                       <button
                         type="button"
                         onClick={() => openDeleteUserConfirm(u)}
-                        disabled={roleSavingId === u.id || deletingUserId === u.id}
+                        disabled={
+                          roleSavingId === u.id ||
+                          deletingUserId === u.id ||
+                          isSuperAdminEmail(u.email)
+                        }
                         className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
                       >
                         {deletingUserId === u.id ? "A eliminar…" : "Eliminar"}
@@ -877,18 +894,18 @@ function AdminPageInner() {
                         <td className="px-4 py-3 text-gray-700">{u.email}</td>
                         <td className="px-4 py-3">
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              u.role === "ADMIN"
-                                ? "bg-[#00923f]/10 text-[#00923f]"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${userRoleBadgeClass(u)}`}
                           >
-                            {u.role}
+                            {userRoleLabel(u)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right whitespace-nowrap">
                           <div className="flex justify-end gap-2">
-                            {u.role === "ADMIN" ? (
+                            {isSuperAdminEmail(u.email) ? (
+                              <span className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                                —
+                              </span>
+                            ) : u.role === "ADMIN" ? (
                               <button
                                 type="button"
                                 onClick={() => openConfirm(u, "USER")}
@@ -910,7 +927,11 @@ function AdminPageInner() {
                             <button
                               type="button"
                               onClick={() => openDeleteUserConfirm(u)}
-                              disabled={roleSavingId === u.id || deletingUserId === u.id}
+                              disabled={
+                                roleSavingId === u.id ||
+                                deletingUserId === u.id ||
+                                isSuperAdminEmail(u.email)
+                              }
                               className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
                             >
                               {deletingUserId === u.id ? "A eliminar…" : "Eliminar"}

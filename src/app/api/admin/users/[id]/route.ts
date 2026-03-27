@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
+import { countEffectiveAdminsExcluding } from "@/lib/admin-effective-count";
 import { isSuperAdminEmail } from "@/lib/super-admin";
 import { logAdminAction } from "@/lib/admin-audit";
 
@@ -29,8 +30,8 @@ export async function DELETE(
   }
 
   if (user.role === "ADMIN") {
-    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
-    if (adminCount <= 1) {
+    const remaining = await countEffectiveAdminsExcluding(id);
+    if (remaining === 0) {
       return Response.json({ error: "Não é possível eliminar o último administrador." }, { status: 400 });
     }
   }

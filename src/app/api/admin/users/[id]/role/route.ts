@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
+import { countEffectiveAdminsExcluding } from "@/lib/admin-effective-count";
 import { isSuperAdminEmail } from "@/lib/super-admin";
 import { logAdminAction } from "@/lib/admin-audit";
 
@@ -19,12 +20,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return Response.json({ error: "Não pode alterar o seu próprio role." }, { status: 400 });
   }
 
-  // Proteção: não permitir remover o último admin
+  // Proteção: não permitir remover o último admin (inclui Super Admin por email, mesmo com role USER na BD)
   if (role === "USER") {
     const current = await prisma.user.findUnique({ where: { id }, select: { role: true } });
     if (current?.role === "ADMIN") {
-      const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
-      if (adminCount <= 1) {
+      const remaining = await countEffectiveAdminsExcluding(id);
+      if (remaining === 0) {
         return Response.json({ error: "Não é possível remover o último administrador." }, { status: 400 });
       }
     }
