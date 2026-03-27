@@ -68,6 +68,13 @@ export function consumeRateLimit(opts: {
   };
 }
 
+/** Compara hosts ignorando diferença www / apex (comum em produção com redirecionamentos). */
+function hostsMatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  const stripWww = (h: string) => (h.startsWith("www.") ? h.slice(4) : h);
+  return stripWww(a) === stripWww(b);
+}
+
 export function shouldAllowMutationFromOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
   if (!origin) return true;
@@ -78,14 +85,30 @@ export function shouldAllowMutationFromOrigin(req: NextRequest): boolean {
     return false;
   }
 
-  const forwardedHost = req.headers.get("x-forwarded-host");
-  const host = forwardedHost || req.headers.get("host");
-  if (!host) return false;
+  const originHost = parsedOrigin.hostname.toLowerCase();
 
-  const forwardedProto = req.headers.get("x-forwarded-proto");
-  const expectedProto = forwardedProto || req.nextUrl.protocol.replace(":", "");
-  const expectedOrigin = `${expectedProto}://${host}`;
-  return parsedOrigin.origin === expectedOrigin;
+  const requestHost = req.nextUrl.hostname.toLowerCase();
+  if (hostsMatch(requestHost, originHost)) return true;
+
+  const xfh = req.headers.get("x-forwarded-host");
+  const forwardedHost = xfh?.split(",")[0]?.trim();
+  const hostHeader = forwardedHost || req.headers.get("host");
+  if (hostHeader) {
+    const h = hostHeader.split(":")[0]?.toLowerCase();
+    if (h && hostsMatch(h, originHost)) return true;
+  }
+
+  const appUrl = process.env.APP_URL;
+  if (appUrl) {
+    try {
+      const canonical = new URL(appUrl);
+      if (hostsMatch(canonical.hostname.toLowerCase(), originHost)) return true;
+    } catch {
+      // ignore
+    }
+  }
+
+  return false;
 }
 
 export function escapeHtml(input: string): string {

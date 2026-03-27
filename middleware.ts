@@ -21,6 +21,25 @@ function applySecurityHeaders(res: NextResponse) {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Páginas com UI condicional à sessão (cookie): evitar HTML/RSC servido em cache na edge
+  // sem variar com o cookie — em Vercel isso faz parecer "logout" de admin após refresh.
+  if (
+    pathname === "/galeria" ||
+    pathname.startsWith("/galeria/") ||
+    pathname === "/aluguer-roupas" ||
+    pathname.startsWith("/aluguer-roupas/") ||
+    pathname === "/perfil"
+  ) {
+    const res = NextResponse.next();
+    res.headers.set(
+      "Cache-Control",
+      "private, no-cache, no-store, max-age=0, must-revalidate"
+    );
+    res.headers.set("Vary", "Cookie");
+    return applySecurityHeaders(res);
+  }
+
   const isApiRoute = pathname.startsWith("/api/");
   const isMutating = MUTATING_METHODS.has(req.method);
 
@@ -108,5 +127,14 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*", "/api/:path*"],
+  matcher: [
+    "/admin",
+    "/admin/:path*",
+    "/api/:path*",
+    "/galeria",
+    "/galeria/:path*",
+    "/aluguer-roupas",
+    "/aluguer-roupas/:path*",
+    "/perfil",
+  ],
 };

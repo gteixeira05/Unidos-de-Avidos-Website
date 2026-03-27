@@ -13,7 +13,9 @@ import { logAdminAction } from "@/lib/admin-audit";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSessionFromRequest(req);
   if (!session) return Response.json({ error: "Não autenticado." }, { status: 401 });
-  if (session.role !== "ADMIN") return Response.json({ error: "Sem permissões." }, { status: 403 });
+  if (session.role !== "ADMIN" && !session.isSuperAdmin) {
+    return Response.json({ error: "Sem permissões." }, { status: 403 });
+  }
 
   const { id: roupaId } = await params;
   const roupa = await prisma.roupa.findUnique({
