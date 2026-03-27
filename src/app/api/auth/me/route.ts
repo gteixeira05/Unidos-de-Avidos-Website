@@ -10,10 +10,15 @@ function isUnknownConsentFieldError(error: unknown): boolean {
   );
 }
 
+const ME_RESPONSE_HEADERS = {
+  "Cache-Control": "private, no-store, must-revalidate",
+  Vary: "Cookie",
+} as const;
+
 export async function GET(req: NextRequest) {
   const session = await getSessionFromRequest(req);
   if (!session) {
-    return Response.json({ user: null }, { status: 200 });
+    return Response.json({ user: null }, { status: 200, headers: ME_RESPONSE_HEADERS });
   }
 
   let user:
@@ -73,11 +78,14 @@ export async function GET(req: NextRequest) {
   }
 
   if (!user) {
-    return Response.json({ user: null }, { status: 200 });
+    return Response.json({ user: null }, { status: 200, headers: ME_RESPONSE_HEADERS });
   }
 
   const role = isSuperAdminEmail(user.email) ? "SUPER_ADMIN" : user.role;
-  return Response.json({ user: { ...user, role } }, { status: 200 });
+  return Response.json(
+    { user: { ...user, role } },
+    { status: 200, headers: ME_RESPONSE_HEADERS }
+  );
 }
 
 export async function PATCH(req: NextRequest) {

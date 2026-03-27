@@ -27,6 +27,7 @@ export default function AdminRoupaFotosManager({
   const [coverOpen, setCoverOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverSaving, setCoverSaving] = useState(false);
+  const [clearingCover, setClearingCover] = useState(false);
   const coverRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -138,6 +139,36 @@ export default function AdminRoupaFotosManager({
     }
   }
 
+  async function removeCoverCatalog() {
+    if (!coverUrl) return;
+    if (
+      !confirm(
+        "Remover a foto de capa do catálogo? Depois pode definir uma nova (upload ou foto da galeria)."
+      )
+    ) {
+      return;
+    }
+    setClearingCover(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/roupas/${roupaId}/capa`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ clear: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro ao remover a capa.");
+      setCoverUrl(data.roupa?.imagemUrl ?? null);
+      await load();
+      router.refresh();
+    } catch (e2) {
+      setError(e2 instanceof Error ? e2.message : "Erro.");
+    } finally {
+      setClearingCover(false);
+    }
+  }
+
   async function setCoverFromGallery(imageUrl: string) {
     setError("");
     try {
@@ -189,14 +220,26 @@ export default function AdminRoupaFotosManager({
         <button
           type="button"
           onClick={openCover}
-          className="rounded-lg border border-[#00923f]/40 bg-white px-4 py-2 text-sm font-semibold text-[#00923f] hover:bg-[#00923f]/5"
+          disabled={clearingCover}
+          className="rounded-lg border border-[#00923f]/40 bg-white px-4 py-2 text-sm font-semibold text-[#00923f] hover:bg-[#00923f]/5 disabled:opacity-50"
         >
           {coverUrl ? "Alterar foto de capa" : "Definir foto de capa"}
         </button>
+        {coverUrl ? (
+          <button
+            type="button"
+            onClick={() => void removeCoverCatalog()}
+            disabled={clearingCover}
+            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-100 disabled:opacity-50"
+          >
+            {clearingCover ? "A remover…" : "Remover capa do catálogo"}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={openAdd}
-          className="rounded-lg bg-[#00923f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a33]"
+          disabled={clearingCover}
+          className="rounded-lg bg-[#00923f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a33] disabled:opacity-50"
         >
           Adicionar fotos à galeria
         </button>

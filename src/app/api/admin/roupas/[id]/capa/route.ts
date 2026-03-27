@@ -81,7 +81,40 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return Response.json({ success: true, roupa: updated });
   }
 
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  if (body?.clear === true) {
+    const old = roupa.imagemUrl;
+    if (!old) {
+      return Response.json({
+        success: true,
+        roupa: { ...roupa, imagemUrl: null },
+      });
+    }
+    if (isDedicatedRoupaCoverFilename(old)) {
+      await unlinkPublicRoupaFile(old);
+    }
+    const updated = await prisma.roupa.update({
+      where: { id: roupaId },
+      data: { imagemUrl: null },
+      select: { id: true, imagemUrl: true, ano: true, tema: true },
+    });
+    await logAdminAction(session, {
+      action: "ROUPA_COVER_UPDATE",
+      entityType: "ROUPA",
+      entityId: roupaId,
+      description: `Removeu a capa do catálogo da roupa ${updated.tema} (${updated.ano}).`,
+      metadata: {
+        roupaId,
+        ano: updated.ano,
+        tema: updated.tema,
+        method: "clear",
+        oldImageUrl: old,
+        newImageUrl: null,
+      },
+    });
+    return Response.json({ success: true, roupa: updated });
+  }
+
   const imageUrlRaw = (body?.imageUrl ?? "").toString().trim();
   if (!imageUrlRaw) {
     return Response.json({ error: "Indique imageUrl (foto desta roupa)." }, { status: 400 });

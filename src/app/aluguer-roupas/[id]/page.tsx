@@ -5,8 +5,7 @@ import CalendarioDisponibilidade from "./CalendarioDisponibilidade";
 import FormularioReserva from "./FormularioReserva";
 import { cookies } from "next/headers";
 import { getSessionFromCookieValue } from "@/lib/auth";
-import AdminRoupaInlineEditor from "@/components/admin/AdminRoupaInlineEditor";
-import AdminRoupaFotosManager from "@/components/admin/AdminRoupaFotosManager";
+import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
 
@@ -158,9 +157,22 @@ export default async function RoupaDetalhePage({
             />
           </section>
 
-          {isAdmin ? (
-            <AdminRoupaFotosManager roupaId={roupa.id} initialCoverUrl={roupa.imagemUrl} />
-          ) : null}
+          <RoupaDetailAdminSection
+            serverIsAdmin={isAdmin}
+            roupaId={roupa.id}
+            initialCoverUrl={roupa.imagemUrl}
+            editorRoupa={{
+              id: roupa.id,
+              ano: roupa.ano,
+              tema: roupa.tema,
+              descricao: roupa.descricao,
+              conjuntoInclui: roupa.conjuntoInclui,
+              regrasLavagem: roupa.regrasLavagem,
+              precoAluguer: roupa.precoAluguer,
+              quantidadeHomem: roupa.quantidadeHomem,
+              quantidadeMulher: roupa.quantidadeMulher,
+            }}
+          />
 
           <CalendarioDisponibilidade roupaId={roupa.id} />
           <FormularioReserva
@@ -171,21 +183,6 @@ export default async function RoupaDetalhePage({
               precoAluguer: roupa.precoAluguer,
             }}
           />
-          {isAdmin ? (
-            <AdminRoupaInlineEditor
-              roupa={{
-                id: roupa.id,
-                ano: roupa.ano,
-                tema: roupa.tema,
-                descricao: roupa.descricao,
-                conjuntoInclui: roupa.conjuntoInclui,
-                regrasLavagem: roupa.regrasLavagem,
-                precoAluguer: roupa.precoAluguer,
-                quantidadeHomem: roupa.quantidadeHomem,
-                quantidadeMulher: roupa.quantidadeMulher,
-              }}
-            />
-          ) : null}
         </div>
       </div>
     </div>
