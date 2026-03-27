@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: "Unidos de Avidos - Associação",
   description:
     "Associação Unidos de Avidos - Marchas Antoninas de Vila Nova de Famalicão desde 2005. Aluguer de roupas e fardas históricas.",
+  icons: {
+    icon: [{ url: "/logo-unidos-avidos-contorno.png", type: "image/png" }],
+    apple: "/logo-unidos-avidos-contorno.png",
+  },
 };
 
 export const viewport: Viewport = {
