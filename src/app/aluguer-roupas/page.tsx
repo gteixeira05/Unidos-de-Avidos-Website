@@ -1,21 +1,11 @@
 import { Shirt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import { getSessionFromCookieValue } from "@/lib/auth";
 import AluguerCatalogContent from "@/components/AluguerCatalogContent";
-import {
-  ANOS_COM_ARCOS_ALUGUER,
-  QUANTIDADE_ARCOS_POR_ANO,
-} from "@/lib/aluguerRoupasPublic";
 
-export const dynamic = "force-dynamic";
+/** Recalcular no servidor a cada 2 min (ISR); visitantes sem sessão podem ser servidos pela CDN. */
+export const revalidate = 120;
 
 export default async function AluguerRoupasPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("ua_session")?.value;
-  const session = await getSessionFromCookieValue(token);
-  const isAdmin = session?.role === "ADMIN" || session?.isSuperAdmin === true;
-
   const roupas = await prisma.roupa.findMany({
     orderBy: { ano: "desc" },
   });
@@ -39,7 +29,7 @@ export default async function AluguerRoupasPage() {
         </p>
       </div>
 
-      <AluguerCatalogContent roupas={roupas} serverIsAdmin={isAdmin} />
+      <AluguerCatalogContent roupas={roupas} serverIsAdmin={false} />
 
       {roupas.length === 0 && (
         <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">

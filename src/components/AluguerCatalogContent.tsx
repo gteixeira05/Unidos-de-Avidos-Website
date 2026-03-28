@@ -34,7 +34,7 @@ export default function AluguerCatalogContent({
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {roupas.map((roupa) => (
+      {roupas.map((roupa, index) => (
         <div
           key={roupa.id}
           className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-[#00923f] hover:shadow-md"
@@ -48,6 +48,7 @@ export default function AluguerCatalogContent({
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 33vw"
+                  priority={index === 0}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">

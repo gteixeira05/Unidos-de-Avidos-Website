@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import { getSessionFromCookieValue } from "@/lib/auth";
 import GaleriaAlbumContent from "@/components/GaleriaAlbumContent";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export default async function GaleriaAnoPage({
   params,
@@ -12,11 +10,6 @@ export default async function GaleriaAnoPage({
   params: Promise<{ ano: string }>;
 }) {
   const { ano } = await params;
-
-  const cookieStore = await cookies();
-  const token = cookieStore.get("ua_session")?.value;
-  const session = await getSessionFromCookieValue(token);
-  const isAdmin = session?.role === "ADMIN" || session?.isSuperAdmin === true;
 
   const year = await prisma.galleryYear.findUnique({
     where: { ano: Number(ano) },
@@ -72,7 +65,7 @@ export default async function GaleriaAnoPage({
         ano={ano}
         coverImageUrl={year.coverImageUrl}
         photos={dbPhotos}
-        serverIsAdmin={isAdmin}
+        serverIsAdmin={false}
       />
     </div>
   );

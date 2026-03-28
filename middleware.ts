@@ -31,21 +31,39 @@ export async function middleware(req: NextRequest) {
     return applySecurityHeaders(res);
   }
 
-  // Páginas com UI condicional à sessão (cookie): evitar HTML/RSC servido em cache na edge
-  // sem variar com o cookie — em Vercel isso faz parecer "logout" de admin após refresh.
-  if (
-    pathname === "/galeria" ||
-    pathname.startsWith("/galeria/") ||
-    pathname === "/aluguer-roupas" ||
-    pathname.startsWith("/aluguer-roupas/") ||
-    pathname === "/perfil"
-  ) {
+  // Perfil: sempre sem cache (dados pessoais).
+  if (pathname === "/perfil") {
     const res = NextResponse.next();
     res.headers.set(
       "Cache-Control",
       "private, no-cache, no-store, max-age=0, must-revalidate"
     );
     res.headers.set("Vary", "Cookie");
+    return applySecurityHeaders(res);
+  }
+
+  // Galeria e aluguer: o HTML público é igual para todos; a UI de admin vem do cliente (useResolvedAdmin).
+  // Sem cookie de sessão → permite cache na CDN (mais rápido). Com sessão → sem cache (evita HTML obsoleto).
+  const isGaleriaOuAluguer =
+    pathname === "/galeria" ||
+    pathname.startsWith("/galeria/") ||
+    pathname === "/aluguer-roupas" ||
+    pathname.startsWith("/aluguer-roupas/");
+  if (isGaleriaOuAluguer) {
+    const res = NextResponse.next();
+    const hasSession = Boolean(req.cookies.get(SESSION_COOKIE_NAME)?.value);
+    if (hasSession) {
+      res.headers.set(
+        "Cache-Control",
+        "private, no-cache, no-store, max-age=0, must-revalidate"
+      );
+      res.headers.set("Vary", "Cookie");
+    } else {
+      res.headers.set(
+        "Cache-Control",
+        "public, max-age=0, s-maxage=120, stale-while-revalidate=600"
+      );
+    }
     return applySecurityHeaders(res);
   }
 

@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import CalendarioDisponibilidade from "./CalendarioDisponibilidade";
 import FormularioReserva from "./FormularioReserva";
-import { cookies } from "next/headers";
-import { getSessionFromCookieValue } from "@/lib/auth";
 import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
@@ -13,7 +11,7 @@ import {
   StockFardasDetalhe,
 } from "@/components/AluguerRoupasInfoPublic";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 function WhatsappIcon({ className }: { className?: string }) {
   return (
@@ -34,11 +32,6 @@ export default async function RoupaDetalhePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
-  const cookieStore = await cookies();
-  const token = cookieStore.get("ua_session")?.value;
-  const session = await getSessionFromCookieValue(token);
-  const isAdmin = session?.role === "ADMIN" || session?.isSuperAdmin === true;
 
   const roupa = await prisma.roupa.findUnique({
     where: { id },
@@ -142,7 +135,7 @@ export default async function RoupaDetalhePage({
           </section>
 
           <RoupaDetailAdminSection
-            serverIsAdmin={isAdmin}
+            serverIsAdmin={false}
             roupaId={roupa.id}
             initialCoverUrl={roupa.imagemUrl}
             editorRoupa={{

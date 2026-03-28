@@ -257,10 +257,14 @@ export default function AdminGaleriaControls() {
 export function AdminGaleriaYearCardShell({
   ano,
   coverSrc,
+  coverSizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw",
+  coverPriority = false,
   dbYear,
 }: {
   ano: number;
   coverSrc: string;
+  coverSizes?: string;
+  coverPriority?: boolean;
   dbYear: DbYearForCard | null;
 }) {
   const router = useRouter();
@@ -309,6 +313,8 @@ export function AdminGaleriaYearCardShell({
             src={coverSrc}
             alt={`Galeria ${ano}`}
             fill
+            sizes={coverSizes}
+            priority={coverPriority}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-black/15" />

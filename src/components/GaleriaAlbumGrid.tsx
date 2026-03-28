@@ -213,6 +213,7 @@ export default function GaleriaAlbumGrid({ ano, photos, adminFooter }: Props) {
                   fill
                   className="object-contain object-center transition-transform duration-300 group-hover:scale-[1.02]"
                   sizes="(max-width: 768px) 100vw, 33vw"
+                  priority={i === 0}
                 />
                 <span
                   className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 rounded-full border border-white/80 bg-black/45 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur-[2px] sm:text-[11px]"

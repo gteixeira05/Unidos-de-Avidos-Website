@@ -38,8 +38,10 @@ export default function GaleriaIndexContent({
         </div>
       ) : (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {years.map((y) => {
+          {years.map((y, index) => {
             const cover = y.coverImageUrl || "/hero-1.png";
+            const coverSizes =
+              "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw";
 
             if (isAdmin) {
               return (
@@ -47,6 +49,8 @@ export default function GaleriaIndexContent({
                   key={y.id}
                   ano={y.ano}
                   coverSrc={cover}
+                  coverSizes={coverSizes}
+                  coverPriority={index === 0}
                   dbYear={{
                     id: y.id,
                     ano: y.ano,
@@ -67,6 +71,8 @@ export default function GaleriaIndexContent({
                     src={cover}
                     alt={`Galeria ${y.ano}`}
                     fill
+                    sizes={coverSizes}
+                    priority={index === 0}
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/15" />
