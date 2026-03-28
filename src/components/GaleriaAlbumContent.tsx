@@ -1,16 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import AdminGaleriaAnoControls from "@/components/admin/AdminGaleriaAnoControls";
 import GaleriaRemovePhotoButton from "@/components/admin/GaleriaRemovePhotoButton";
 import GaleriaSetCoverButton from "@/components/admin/GaleriaSetCoverButton";
+import GaleriaAlbumGrid, { type GaleriaAlbumPhoto } from "@/components/GaleriaAlbumGrid";
 import { useResolvedAdmin } from "@/hooks/useResolvedAdmin";
 
-export type GaleriaAlbumPhoto = {
-  id: string;
-  imageUrl: string;
-  caption: string | null;
-};
+export type { GaleriaAlbumPhoto };
 
 export default function GaleriaAlbumContent({
   ano,
@@ -48,30 +44,20 @@ export default function GaleriaAlbumContent({
           )}
         </div>
       ) : (
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {photos.map((p) => (
-            <article
-              key={p.id}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-            >
-              <div className="relative aspect-[4/3] bg-gray-100">
-                <Image
-                  src={p.imageUrl}
-                  alt={p.caption ?? `Foto ${ano}`}
-                  fill
-                  className="object-cover transition-transform duration-500 hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                />
-              </div>
-              {isAdmin ? (
-                <div className="border-t border-gray-100 bg-gray-50/80 p-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-2 sm:bg-white/90">
-                  <GaleriaSetCoverButton ano={ano} imageUrl={p.imageUrl} />
-                  <GaleriaRemovePhotoButton photoId={p.id} />
-                </div>
-              ) : null}
-            </article>
-          ))}
-        </div>
+        <GaleriaAlbumGrid
+          ano={ano}
+          photos={photos}
+          adminFooter={
+            isAdmin
+              ? (p) => (
+                  <>
+                    <GaleriaSetCoverButton ano={ano} imageUrl={p.imageUrl} />
+                    <GaleriaRemovePhotoButton photoId={p.id} />
+                  </>
+                )
+              : undefined
+          }
+        />
       )}
     </>
   );

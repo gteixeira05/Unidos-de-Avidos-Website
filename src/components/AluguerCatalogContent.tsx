@@ -6,6 +6,11 @@ import { Shirt } from "lucide-react";
 import AdminRoupasControls from "@/components/admin/AdminRoupasControls";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
 import { useResolvedAdmin } from "@/hooks/useResolvedAdmin";
+import {
+  BlocoStockCriancasArcos,
+  PrecoAluguerPublico,
+  StockEstimativasCatalogo,
+} from "@/components/AluguerRoupasInfoPublic";
 
 export type RoupaCatalogRow = {
   id: string;
@@ -63,30 +68,14 @@ export default function AluguerCatalogContent({
                 <p className="mt-2 line-clamp-2 text-sm text-gray-600">
                   {roupa.descricao ?? ""}
                 </p>
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <span className="text-lg font-bold text-[#00923f]">
-                  {roupa.precoAluguer.toFixed(2)} €
+              <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-base font-bold text-[#00923f]">
+                  <PrecoAluguerPublico />
                 </span>
-                <span className="text-sm text-gray-500">Preço fixo</span>
+                <span className="text-xs text-gray-500">Preço do aluguer</span>
               </div>
-              <div className="mt-3 flex gap-2 border-t border-gray-100 pt-3">
-                <div className="flex min-w-0 flex-1 items-center justify-between rounded-md border border-gray-200/90 bg-gray-50/90 px-2.5 py-1.5">
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                    Homem
-                  </span>
-                  <span className="text-sm font-semibold tabular-nums text-gray-900">
-                    {roupa.quantidadeHomem}
-                  </span>
-                </div>
-                <div className="flex min-w-0 flex-1 items-center justify-between rounded-md border border-gray-200/90 bg-gray-50/90 px-2.5 py-1.5">
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                    Mulher
-                  </span>
-                  <span className="text-sm font-semibold tabular-nums text-gray-900">
-                    {roupa.quantidadeMulher}
-                  </span>
-                </div>
-              </div>
+              <StockEstimativasCatalogo />
+              <BlocoStockCriancasArcos ano={roupa.ano} variant="catalog" />
             </div>
           </Link>
 

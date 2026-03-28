@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { getSessionFromCookieValue } from "@/lib/auth";
 import AluguerCatalogContent from "@/components/AluguerCatalogContent";
+import {
+  ANOS_COM_ARCOS_ALUGUER,
+  QUANTIDADE_ARCOS_POR_ANO,
+} from "@/lib/aluguerRoupasPublic";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +27,15 @@ export default async function AluguerRoupasPage() {
           Aluguer de Roupas
         </h1>
         <p className="mt-4 text-lg text-gray-600">
-          Catálogo das nossas fardas dos anos anteriores. Cada roupa inclui
-          informação sobre disponibilidade, preço e regras de utilização.
+          Catálogo das nossas fardas dos anos anteriores. Os preços de aluguer
+          ainda não estão definidos; encontrará estimativas de stock e pode{" "}
+          <a
+            href="/fale-connosco"
+            className="font-medium text-[#00923f] underline decoration-[#00923f]/35 underline-offset-2 hover:decoration-[#00923f]"
+          >
+            contactar-nos
+          </a>{" "}
+          para quantidades ao certo ou outras questões.
         </p>
       </div>
 

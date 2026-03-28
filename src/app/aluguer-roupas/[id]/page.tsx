@@ -8,6 +8,10 @@ import { getSessionFromCookieValue } from "@/lib/auth";
 import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
+import {
+  PrecoAluguerPublico,
+  StockFardasDetalhe,
+} from "@/components/AluguerRoupasInfoPublic";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +85,9 @@ export default async function RoupaDetalhePage({
               <div>
                 <h4 className="font-semibold text-gray-900">Condição de aluguer</h4>
                 <p className="text-sm text-gray-600">
-                  O valor é fixo para esta roupa (ano completo), independentemente da quantidade levantada.
+                  O preço do aluguer ainda não está definido; será acordado connosco
+                  após o pedido. O valor é referente ao ano completo, independentemente
+                  da quantidade de fardas levantadas.
                 </p>
               </div>
               {roupa.conjuntoInclui && (
@@ -99,33 +105,11 @@ export default async function RoupaDetalhePage({
                 </div>
               )}
 
-              <div>
-                <h4 className="font-semibold text-gray-900">Stock de fardas</h4>
-                <p className="mt-2 text-sm text-gray-600">
-                  Conjuntos disponíveis por género (valores indicativos do inventário).
-                </p>
-                <div className="mt-3 flex max-w-sm gap-3">
-                  <div className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
-                    <span className="text-sm text-gray-600">Homem</span>
-                    <span className="text-lg font-semibold tabular-nums text-gray-900">
-                      {roupa.quantidadeHomem}
-                    </span>
-                  </div>
-                  <div className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
-                    <span className="text-sm text-gray-600">Mulher</span>
-                    <span className="text-lg font-semibold tabular-nums text-gray-900">
-                      {roupa.quantidadeMulher}
-                    </span>
-                  </div>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-gray-500">
-                  A disponibilidade nas datas que pretender depende sempre de confirmação após o pedido.
-                </p>
-              </div>
+              <StockFardasDetalhe ano={roupa.ano} />
             </div>
 
-            <p className="mt-6 text-2xl font-bold text-[#00923f]">
-              {roupa.precoAluguer.toFixed(2)} €
+            <p className="mt-6 text-xl font-bold text-[#00923f]">
+              <PrecoAluguerPublico />
             </p>
 
             <a
@@ -180,7 +164,6 @@ export default async function RoupaDetalhePage({
               id: roupa.id,
               ano: roupa.ano,
               tema: tituloExibicao,
-              precoAluguer: roupa.precoAluguer,
             }}
           />
         </div>

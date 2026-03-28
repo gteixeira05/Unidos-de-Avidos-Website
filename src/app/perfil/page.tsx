@@ -614,7 +614,8 @@ export default function PerfilPage() {
                   {new Date(r.dataFim).toLocaleDateString("pt-PT")}
                 </p>
                 <p className="mt-1 text-sm text-gray-700">
-                  Valor: <span className="font-medium">{Number(r.roupa.precoAluguer).toFixed(2)} €</span>
+                  Valor:{" "}
+                  <span className="font-medium">Ainda não definido (a acordar)</span>
                 </p>
                 {["PENDENTE", "APROVADA"].includes(r.estado) ? (
                   <div className="mt-3">

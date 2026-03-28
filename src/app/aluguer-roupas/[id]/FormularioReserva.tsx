@@ -10,7 +10,6 @@ interface Roupa {
   id: string;
   ano: number;
   tema: string;
-  precoAluguer: number;
 }
 
 export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
@@ -158,8 +157,9 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
       </h3>
       <p className="mb-4 text-sm text-gray-600">
         O pedido não confirma a reserva de imediato. A equipa validará o stock
-          e contactá-lo-á para aprovação. O valor cobrado é o preço total da roupa
-          deste ano, independentemente da quantidade de fardas levantadas.
+        e contactá-lo-á para aprovação. O preço de aluguer ainda não está
+        definido; será acordado convosco. O valor será referente ao ano completo,
+        independentemente da quantidade de fardas levantadas.
       </p>
 
       <div className="mb-5 flex gap-3 rounded-lg border border-[#00923f]/20 bg-[#00923f]/[0.06] p-4 text-sm text-gray-700">
@@ -287,7 +287,7 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
         />
 
         <p className="text-sm text-gray-500">
-          Total estimado: {roupa.precoAluguer.toFixed(2)} € (valor total da roupa deste ano)
+          Preço do aluguer: ainda não definido (será acordado após análise do pedido).
         </p>
 
         <button
