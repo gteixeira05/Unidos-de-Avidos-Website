@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Unidos de Avidos - Associação",
+  title: "Unidos de Avidos",
   description:
     "Associação Unidos de Avidos - Marchas Antoninas de Vila Nova de Famalicão desde 2005. Aluguer de roupas e fardas históricas.",
   icons: {
