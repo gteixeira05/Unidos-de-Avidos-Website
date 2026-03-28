@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getContactFormAdminEmails } from "@/lib/admin-notify-recipients";
 import { sendEmail } from "@/lib/email";
-import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   if (!process.env.RESEND_API_KEY) {
@@ -21,14 +21,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const admins = await prisma.user.findMany({
-      where: { role: "ADMIN", emailNotifContacto: true },
-      select: { email: true },
-    });
-    const emailsAdmins = admins.map((a) => a.email).filter(Boolean);
+    const emailsAdmins = await getContactFormAdminEmails();
     if (!emailsAdmins.length) {
       return NextResponse.json(
-        { error: "Não existem administradores com email configurado." },
+        { error: "Não existem destinatários configurados para contactos do site." },
         { status: 500 }
       );
     }

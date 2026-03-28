@@ -2,6 +2,10 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import {
+  collectReservaNotifyEmails,
+  getAdminTeamForReservaNotify,
+} from "@/lib/admin-notify-recipients";
 import { consumeRateLimit, escapeHtml, getClientIp, normalizeEmail } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
@@ -108,12 +112,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Notificar admins (in-app + email)
+    // Notificar equipa de backoffice (ADMIN na BD + Super Admin por email, mesmo como USER)
     const [admins, user] = await Promise.all([
-      prisma.user.findMany({
-        where: { role: "ADMIN" },
-        select: { id: true, email: true, name: true, emailNotifReservas: true },
-      }),
+      getAdminTeamForReservaNotify(),
       prisma.user.findUnique({
         where: { id: session.id },
         select: { id: true, name: true, email: true },
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
         })),
       });
 
-      const emails = admins.filter((a) => a.emailNotifReservas).map((a) => a.email).filter(Boolean);
+      const emails = collectReservaNotifyEmails(admins);
       if (emails.length) {
         const inicio = new Date(dataInicio).toLocaleDateString("pt-PT");
         const fim = new Date(dataFim).toLocaleDateString("pt-PT");

@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { getAdminTeamForReservaNotify } from "@/lib/admin-notify-recipients";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 
@@ -48,10 +49,7 @@ export async function PATCH(
     select: { id: true, estado: true },
   });
 
-  const admins = await prisma.user.findMany({
-    where: { role: "ADMIN" },
-    select: { id: true },
-  });
+  const admins = await getAdminTeamForReservaNotify();
 
   if (admins.length) {
     const who = await prisma.user.findUnique({

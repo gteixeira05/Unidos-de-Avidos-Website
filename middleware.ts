@@ -22,6 +22,15 @@ function applySecurityHeaders(res: NextResponse) {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Muitos browsers pedem /favicon.ico por defeito; sem isto podem mostrar o ícone genérico da Vercel.
+  if (pathname === "/favicon.ico") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/icon.png";
+    const res = NextResponse.redirect(url, 307);
+    res.headers.set("Cache-Control", "public, max-age=604800, immutable");
+    return applySecurityHeaders(res);
+  }
+
   // Páginas com UI condicional à sessão (cookie): evitar HTML/RSC servido em cache na edge
   // sem variar com o cookie — em Vercel isso faz parecer "logout" de admin após refresh.
   if (
@@ -128,6 +137,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/favicon.ico",
     "/admin",
     "/admin/:path*",
     "/api/:path*",
