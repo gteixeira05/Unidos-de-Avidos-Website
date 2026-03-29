@@ -5,6 +5,14 @@
 export const GALLERY_IMAGE_FORMAT_ERROR =
   "Use JPG, PNG, WebP, GIF, HEIC/HEIF ou DNG (ProRAW Apple). Se um DNG não converter, exporte como JPG nas Fotos.";
 
+/**
+ * Valor de `accept` em inputs de ficheiro (galeria admin).
+ * Evita Safari/iOS a lançar "The string did not match the expected pattern." com listas longas
+ * de MIME não standard (ex.: `image/dng`, `application/octet-stream`). A validação real é
+ * `isAllowedGalleryUpload` na API.
+ */
+export const GALLERY_FILE_INPUT_ACCEPT = "image/*,.dng";
+
 /** Extensões que o admin pode enviar (inclui HEIC/HEIF e DNG ProRAW). */
 const ALLOWED_UPLOAD = new Set(["jpg", "jpeg", "png", "webp", "gif", "heic", "heif", "dng"]);
 

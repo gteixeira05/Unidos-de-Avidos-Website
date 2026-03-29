@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { GALLERY_FILE_INPUT_ACCEPT } from "@/lib/gallery-images";
 
 type Props = {
   ano: string;
@@ -71,7 +72,17 @@ export default function AdminGaleriaAnoControls({ ano, hasDbYear, coverImageUrl 
       closeAdd();
       router.refresh();
     } catch (e2) {
-      setError(e2 instanceof Error ? e2.message : "Ocorreu um erro.");
+      const raw = e2 instanceof Error ? e2.message : "";
+      if (
+        raw.includes("did not match the expected pattern") ||
+        raw.includes("expected pattern")
+      ) {
+        setError(
+          "O navegador rejeitou o tipo de ficheiros (erro conhecido no Safari com muitas fotos). Atualize a página e tente outra vez; se persistir, envie menos fotos de cada vez (ex.: 10) ou use JPG/PNG."
+        );
+      } else {
+        setError(raw || "Ocorreu um erro.");
+      }
     } finally {
       setAddSaving(false);
     }
@@ -234,7 +245,7 @@ export default function AdminGaleriaAnoControls({ ano, hasDbYear, coverImageUrl 
               <input
                 ref={coverInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/dng,.dng,application/octet-stream"
+                accept={GALLERY_FILE_INPUT_ACCEPT}
                 onChange={onCoverFileChange}
                 className="w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#00923f]/10 file:px-3 file:py-2 file:text-[#00923f] file:font-semibold"
               />
@@ -289,7 +300,7 @@ export default function AdminGaleriaAnoControls({ ano, hasDbYear, coverImageUrl 
               <input
                 ref={addInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/dng,.dng,application/octet-stream"
+                accept={GALLERY_FILE_INPUT_ACCEPT}
                 multiple
                 onChange={onAddFileChange}
                 className="w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#00923f]/10 file:px-3 file:py-2 file:text-[#00923f] file:font-semibold"

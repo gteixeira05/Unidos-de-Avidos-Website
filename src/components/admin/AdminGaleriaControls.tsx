@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { GALLERY_FILE_INPUT_ACCEPT } from "@/lib/gallery-images";
 
 export type DbYearForCard = {
   id: string;
@@ -220,7 +221,7 @@ export default function AdminGaleriaControls() {
               <input
                 ref={createCoverInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/dng,.dng,application/octet-stream"
+                accept={GALLERY_FILE_INPUT_ACCEPT}
                 onChange={(e) => setCreateCover(e.target.files?.[0] ?? null)}
                 className="mt-1 w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#00923f]/10 file:px-3 file:py-2 file:text-[#00923f] file:font-semibold"
               />
