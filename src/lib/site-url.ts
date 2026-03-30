@@ -1,13 +1,23 @@
 /**
- * URL pública do site (SEO, sitemap, emails). Definir APP_URL em produção, ex.: https://unidosdeavidos.pt
+ * URL pública do site (SEO, sitemap, emails).
+ * Definir `APP_URL` (ex.: https://unidosdeavidos.pt) nas variáveis de ambiente de produção.
+ *
+ * Não usar `VERCEL_URL` como fallback: no deploy com domínio próprio o sitemap listaria
+ * URLs em *.vercel.app e a Search Console reporta dezenas de erros no mapa do site.
  */
-export function getSiteUrl(): string {
-  const fromEnv = process.env.APP_URL?.trim();
-  if (fromEnv) {
-    return fromEnv.replace(/\/$/, "");
+function normalizeSiteUrl(raw: string): string {
+  let s = raw.trim().replace(/\/$/, "");
+  if (!/^https?:\/\//i.test(s)) {
+    s = `https://${s}`;
   }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
+  return s;
+}
+
+export function getSiteUrl(): string {
+  const fromEnv =
+    process.env.APP_URL?.trim() ?? process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (fromEnv) {
+    return normalizeSiteUrl(fromEnv);
   }
   return "https://unidosdeavidos.pt";
 }
