@@ -3,11 +3,15 @@ import {
   Facebook,
   Instagram,
   IdCard,
+  Linkedin,
   MapPin,
   Mail,
   MessageCircle,
   Phone,
 } from "lucide-react";
+
+const DESENVOLVEDOR_LINKEDIN =
+  "https://www.linkedin.com/in/gon%C3%A7alo-teixeira-ab2763205/";
 
 export default function Footer() {
   return (
@@ -135,8 +139,20 @@ export default function Footer() {
 
         <div className="mt-10 border-t border-gray-200 pt-6 text-center text-xs text-gray-500">
           <p>
-            © {new Date().getFullYear()} Unidos de Avidos - Associação. Todos os
+            © {new Date().getFullYear()} Unidos de Avidos. Todos os
             direitos reservados.
+          </p>
+          <p className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-gray-500">
+            <span>Desenvolvimento web:</span>
+            <a
+              href={DESENVOLVEDOR_LINKEDIN}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-gray-600 underline-offset-2 hover:text-[#00923f] hover:underline"
+            >
+              <Linkedin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              Gonçalo Teixeira
+            </a>
           </p>
         </div>
       </div>

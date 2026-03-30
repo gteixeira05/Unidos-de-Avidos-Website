@@ -342,7 +342,46 @@ export const MARCHAS_INFO: Record<number, MarchaAnoInfo> = {
     descricaoCard: "Tema Júlio Brandão. 2.º lugar. Vídeo e fotos da edição.",
     subtitulo: "Classificação",
     classificacao: [
-      { pos: "2º", nome: "Associação Unidos de Avidos (\"Júlio Brandão\")" },
+      {
+        pos: "1º",
+        nome: "Associação Recreativa e Cultural de Antas",
+        pontos: "96 pontos",
+      },
+      {
+        pos: "2º",
+        nome: "Associação Unidos de Avidos (\"Júlio Brandão\")",
+        pontos: "90 pontos",
+      },
+      {
+        pos: "3º",
+        nome: "Associação Cultural e Recreativa S. Pedro de Riba d'Ave",
+        pontos: "80 pontos",
+      },
+      {
+        pos: "4º",
+        nome: "Clube Recreativo Amigos de Vilarinho",
+        pontos: "78 pontos",
+      },
+      {
+        pos: "5º",
+        nome: "Associação Cultural Desportiva S. Martinho de Brufe",
+        pontos: "59 pontos",
+      },
+      {
+        pos: "6º",
+        nome: "Ribeirão Musical – Sociedade Artística e Musical",
+        pontos: "59 pontos",
+      },
+      {
+        pos: "7º",
+        nome: "União de freguesias Gondifelos / Cavalões / Outiz",
+        pontos: "53 pontos",
+      },
+      {
+        pos: "8º",
+        nome: "Associação Recreativa e Cultural Flor do Monte – Carreira",
+        pontos: "44 pontos",
+      },
     ],
     youtubeUrl: "https://www.youtube.com/live/FpchRmGajMc?si=w_isux2UZasxBw-0&t=3794",
   },
