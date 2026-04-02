@@ -254,11 +254,8 @@ function AdminPageInner() {
   const [alugadasError, setAlugadasError] = useState("");
   const [editReservaState, setEditReservaState] = useState<EditReservaState>({ open: false });
   const [savingEditReserva, setSavingEditReserva] = useState(false);
-  const [editReservaSucesso, setEditReservaSucesso] = useState<{
-    open: boolean;
-    tema: string;
-    ano: number;
-  }>({ open: false, tema: "", ano: 0 });
+  /** Confirmação antes de aplicar PATCH ao guardar edição da reserva */
+  const [confirmGuardarReservaOpen, setConfirmGuardarReservaOpen] = useState(false);
 
   // Utilizadores state
   const [q, setQ] = useState("");
@@ -622,11 +619,26 @@ function AdminPageInner() {
 
   function closeEditReserva() {
     if (savingEditReserva) return;
+    setConfirmGuardarReservaOpen(false);
     setEditReservaState({ open: false });
   }
 
-  async function guardarEdicaoReserva() {
+  function abrirConfirmacaoGuardarReserva() {
     if (!editReservaState.open) return;
+    if (savingEditReserva) return;
+    if (
+      editReservaState.form.estado === "APROVADA" &&
+      editReservaState.form.pagamentoEstado === "PAGO" &&
+      !editReservaState.form.metodoPagamento
+    ) {
+      return;
+    }
+    setConfirmGuardarReservaOpen(true);
+  }
+
+  async function executarGuardarEdicaoReserva() {
+    if (!editReservaState.open) return;
+    setConfirmGuardarReservaOpen(false);
     setReservasError("");
     setAlugadasError("");
     setSavingEditReserva(true);
@@ -645,10 +657,7 @@ function AdminPageInner() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Erro ao guardar edição da reserva.");
       await Promise.all([reloadReservas(), reloadAlugadas()]);
-      const tema = editReservaState.reserva.roupa.tema;
-      const ano = editReservaState.reserva.roupa.ano;
       setEditReservaState({ open: false });
-      setEditReservaSucesso({ open: true, tema, ano });
     } catch (e) {
       const message = e instanceof Error ? e.message : "Ocorreu um erro.";
       setReservasError(message);
@@ -1476,7 +1485,7 @@ function AdminPageInner() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void guardarEdicaoReserva()}
+                  onClick={abrirConfirmacaoGuardarReserva}
                   disabled={
                     savingEditReserva ||
                     (editReservaState.form.estado === "APROVADA" &&
@@ -1493,54 +1502,53 @@ function AdminPageInner() {
         </div>
       )}
 
-      {/* Confirmação após guardar edição da reserva */}
-      {editReservaSucesso.open ? (
+      {/* Confirmação antes de guardar edição da reserva */}
+      {confirmGuardarReservaOpen && editReservaState.open ? (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[72] flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="edit-reserva-sucesso-titulo"
+          aria-labelledby="confirm-guardar-reserva-titulo"
         >
           <button
             type="button"
-            onClick={() => setEditReservaSucesso({ open: false, tema: "", ano: 0 })}
+            onClick={() => setConfirmGuardarReservaOpen(false)}
             className="absolute inset-0 bg-black/50"
             aria-label="Fechar"
           />
           <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
-            <div className="border-b border-[#00923f]/15 bg-[#00923f]/5 px-5 py-5 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#00923f] text-white shadow-sm">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-7 w-7"
-                  aria-hidden
-                >
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
-              </div>
-              <h2 id="edit-reserva-sucesso-titulo" className="mt-4 text-lg font-bold text-gray-900">
-                Alterações guardadas
+            <div className="border-b border-gray-100 bg-[#00923f]/5 p-5">
+              <p className="text-sm font-semibold text-[#00923f]">Confirmar ação</p>
+              <h2 id="confirm-guardar-reserva-titulo" className="mt-1 text-lg font-bold text-gray-900">
+                Guardar alterações à reserva?
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                A reserva <span className="font-semibold text-gray-800">{editReservaSucesso.tema}</span>{" "}
-                <span className="whitespace-nowrap">({editReservaSucesso.ano})</span> foi atualizada com
-                sucesso.
+              <p className="mt-2 text-sm text-gray-600">
+                {editReservaState.reserva.roupa.tema}{" "}
+                <span className="text-gray-500">({editReservaState.reserva.roupa.ano})</span>
               </p>
             </div>
-            <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
-              <button
-                type="button"
-                onClick={() => setEditReservaSucesso({ open: false, tema: "", ano: 0 })}
-                className="w-full rounded-xl bg-[#00923f] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#007a33]"
-              >
-                OK
-              </button>
+            <div className="p-5">
+              <p className="text-sm text-gray-700">
+                Os dados editados vão substituir os que estavam guardados. Quer guardar estas alterações?
+              </p>
+              <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmGuardarReservaOpen(false)}
+                  disabled={savingEditReserva}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-60"
+                >
+                  Não, voltar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void executarGuardarEdicaoReserva()}
+                  disabled={savingEditReserva}
+                  className="rounded-lg bg-[#00923f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a33] disabled:opacity-60"
+                >
+                  {savingEditReserva ? "A guardar…" : "Sim, guardar"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
