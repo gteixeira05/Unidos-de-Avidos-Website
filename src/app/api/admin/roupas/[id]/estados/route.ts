@@ -30,6 +30,8 @@ export async function GET(
       email: true,
       telefone: true,
       observacoes: true,
+      pagamentoEstado: true,
+      metodoPagamento: true,
     },
   });
 
@@ -57,6 +59,8 @@ export async function GET(
       email: r.user?.email ?? r.email ?? null,
       telefone: r.telefone ?? null,
       observacoes: r.observacoes ?? null,
+      pagamentoEstado: r.pagamentoEstado ?? "POR_PAGAR",
+      metodoPagamento: r.metodoPagamento ?? null,
     })),
     pendentes: pendentes.map((p) => ({
       id: p.id,

@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  labelMetodoPagamento,
+  labelPagamentoEstado,
+  normalizePagamentoEstado,
+} from "@/lib/reservaPagamento";
 
 type Props = {
   roupa: {
@@ -26,6 +31,8 @@ type AlugadaItem = Interval & {
   email: string | null;
   telefone: string | null;
   observacoes: string | null;
+  pagamentoEstado?: string | null;
+  metodoPagamento?: string | null;
 };
 type Pendente = Interval & {
   id: string;
@@ -804,6 +811,13 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
                               </p>
                               <p className="mt-1 text-xs text-gray-700">
                                 <span className="font-medium">Observações:</span> {i.observacoes || "—"}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-700">
+                                <span className="font-medium">Pagamento:</span>{" "}
+                                {labelPagamentoEstado(i.pagamentoEstado)}
+                                {normalizePagamentoEstado(i.pagamentoEstado) === "PAGO"
+                                  ? ` · ${labelMetodoPagamento(i.metodoPagamento)}`
+                                  : ""}
                               </p>
                             </div>
 

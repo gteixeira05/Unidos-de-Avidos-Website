@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { notifyAuthSessionChanged } from "@/lib/auth-session-events";
 import { notifyNotificationsMutated } from "@/lib/notification-events";
+import {
+  labelMetodoPagamento,
+  labelPagamentoEstado,
+  normalizePagamentoEstado,
+} from "@/lib/reservaPagamento";
 
 interface User {
   id: string;
@@ -32,6 +37,8 @@ type ReservaItem = {
   dataInicio: string;
   dataFim: string;
   createdAt: string;
+  pagamentoEstado?: string | null;
+  metodoPagamento?: string | null;
   roupa: { id: string; ano: number; tema: string; precoAluguer: number };
 };
 
@@ -617,6 +624,24 @@ export default function PerfilPage() {
                   Valor:{" "}
                   <span className="font-medium">Ainda não definido (a acordar)</span>
                 </p>
+                {r.estado === "APROVADA" ? (
+                  <>
+                    <p className="mt-1 text-sm text-gray-700">
+                      Pagamento:{" "}
+                      <span className="font-medium">
+                        {labelPagamentoEstado(r.pagamentoEstado)}
+                      </span>
+                    </p>
+                    {normalizePagamentoEstado(r.pagamentoEstado) === "PAGO" ? (
+                      <p className="mt-1 text-sm text-gray-700">
+                        Método:{" "}
+                        <span className="font-medium">
+                          {labelMetodoPagamento(r.metodoPagamento)}
+                        </span>
+                      </p>
+                    ) : null}
+                  </>
+                ) : null}
                 {["PENDENTE", "APROVADA"].includes(r.estado) ? (
                   <div className="mt-3">
                     <button

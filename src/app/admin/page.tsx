@@ -3,6 +3,12 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { isSuperAdminEmail } from "@/lib/super-admin";
+import {
+  labelMetodoPagamento,
+  labelPagamentoEstado,
+  normalizePagamentoEstado,
+  type PagamentoEstado,
+} from "@/lib/reservaPagamento";
 
 type AdminTab = "reservas" | "alugadas" | "utilizadores" | "logs";
 
@@ -16,6 +22,8 @@ type ReservaAdmin = {
   nome?: string | null;
   email?: string | null;
   telefone?: string | null;
+  pagamentoEstado?: string | null;
+  metodoPagamento?: string | null;
   createdAt: string;
   user?: { id: string; name: string; email: string } | null;
   roupa: { id: string; ano: number; tema: string; precoAluguer: number };
@@ -65,6 +73,8 @@ type EditReservaState =
         email: string;
         telefone: string;
         observacoes: string;
+        pagamentoEstado: string;
+        metodoPagamento: string;
       };
     };
 type AdminLogItem = {
@@ -88,6 +98,106 @@ type LogsApiResponse = {
   nextCursor: string | null;
   filters: LogFilters;
 };
+
+function AlugadaPagamentoControls({
+  reserva,
+  onSaved,
+}: {
+  reserva: ReservaAdmin;
+  onSaved: () => void | Promise<void>;
+}) {
+  const [pe, setPe] = useState<PagamentoEstado>(normalizePagamentoEstado(reserva.pagamentoEstado));
+  const [mp, setMp] = useState(() => reserva.metodoPagamento ?? "");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    setPe(normalizePagamentoEstado(reserva.pagamentoEstado));
+    setMp(reserva.metodoPagamento ?? "");
+    setErr("");
+  }, [reserva.id, reserva.pagamentoEstado, reserva.metodoPagamento]);
+
+  const serverPe = normalizePagamentoEstado(reserva.pagamentoEstado);
+  const serverMp = reserva.metodoPagamento ?? "";
+  const dirty =
+    pe !== serverPe || (pe === "PAGO" && mp !== serverMp);
+
+  async function guardar() {
+    setSaving(true);
+    setErr("");
+    try {
+      const res = await fetch(`/api/admin/reservas/${reserva.id}/pagamento`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pagamentoEstado: pe,
+          metodoPagamento: pe === "PAGO" ? mp : null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Erro ao guardar pagamento.");
+      await onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erro ao guardar.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-gray-200 bg-white p-3">
+      <p className="text-xs font-semibold text-gray-800">Pagamento</p>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <label className="block text-xs text-gray-700">
+          <span className="mb-0.5 block font-medium">Estado</span>
+          <select
+            value={pe}
+            onChange={(e) => {
+              const v = e.target.value as PagamentoEstado;
+              setPe(v);
+              if (v === "POR_PAGAR") setMp("");
+            }}
+            disabled={saving}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+          >
+            <option value="POR_PAGAR">Por pagar</option>
+            <option value="PAGO">Paga</option>
+          </select>
+        </label>
+        <label className="block text-xs text-gray-700">
+          <span className="mb-0.5 block font-medium">Método (se paga)</span>
+          <select
+            value={mp}
+            onChange={(e) => setMp(e.target.value)}
+            disabled={saving || pe !== "PAGO"}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm disabled:bg-gray-100"
+          >
+            <option value="">Escolher…</option>
+            <option value="DINHEIRO_FISICO">Dinheiro físico</option>
+            <option value="TRANSFERENCIA_BANCARIA">Transferência bancária</option>
+          </select>
+        </label>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => void guardar()}
+          disabled={saving || !dirty || (pe === "PAGO" && !mp)}
+          className="rounded-lg bg-[#00923f] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007a33] disabled:opacity-50"
+        >
+          {saving ? "A guardar…" : "Guardar pagamento"}
+        </button>
+        <span className="text-xs text-gray-500">
+          Atual: {labelPagamentoEstado(reserva.pagamentoEstado)}
+          {normalizePagamentoEstado(reserva.pagamentoEstado) === "PAGO"
+            ? ` · ${labelMetodoPagamento(reserva.metodoPagamento)}`
+            : ""}
+        </span>
+      </div>
+      {err ? <p className="mt-2 text-xs text-red-600">{err}</p> : null}
+    </div>
+  );
+}
 
 function AdminPageInner() {
   const searchParams = useSearchParams();
@@ -482,6 +592,8 @@ function AdminPageInner() {
         email: reserva.email ?? reserva.user?.email ?? "",
         telefone: reserva.telefone ?? "",
         observacoes: reserva.observacoes ?? "",
+        pagamentoEstado: normalizePagamentoEstado(reserva.pagamentoEstado),
+        metodoPagamento: reserva.metodoPagamento ?? "",
       },
     });
   }
@@ -497,10 +609,16 @@ function AdminPageInner() {
     setAlugadasError("");
     setSavingEditReserva(true);
     try {
+      const form = editReservaState.form;
+      const body: Record<string, unknown> = { ...form };
+      if (form.estado !== "APROVADA") {
+        delete body.pagamentoEstado;
+        delete body.metodoPagamento;
+      }
       const res = await fetch(`/api/admin/reservas/${editReservaState.reserva.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editReservaState.form),
+        body: JSON.stringify(body),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Erro ao guardar edição da reserva.");
@@ -658,6 +776,20 @@ function AdminPageInner() {
                   <p className="mt-2 text-sm text-gray-700">
                     <span className="font-medium">Observações:</span> {r.observacoes ?? "—"}
                   </p>
+                  {r.estado === "APROVADA" ? (
+                    <>
+                      <p className="mt-2 text-sm text-gray-700">
+                        <span className="font-medium">Pagamento:</span>{" "}
+                        {labelPagamentoEstado(r.pagamentoEstado)}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-700">
+                        <span className="font-medium">Método:</span>{" "}
+                        {normalizePagamentoEstado(r.pagamentoEstado) === "PAGO"
+                          ? labelMetodoPagamento(r.metodoPagamento)
+                          : "—"}
+                      </p>
+                    </>
+                  ) : null}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {estado !== "APROVADA" && (
                       <button
@@ -752,6 +884,7 @@ function AdminPageInner() {
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Observações:</span> {r.observacoes ?? "—"}
                         </p>
+                        <AlugadaPagamentoControls reserva={r} onSaved={() => void reloadAlugadas()} />
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button
                             type="button"
@@ -1239,6 +1372,54 @@ function AdminPageInner() {
                   className="w-full rounded-lg border border-gray-300 px-3 py-2"
                 />
               </label>
+              {editReservaState.form.estado === "APROVADA" ? (
+                <>
+                  <label className="text-sm">
+                    <span className="mb-1 block font-medium text-gray-700">Pagamento</span>
+                    <select
+                      value={editReservaState.form.pagamentoEstado}
+                      onChange={(e) =>
+                        setEditReservaState((prev) =>
+                          prev.open
+                            ? {
+                                ...prev,
+                                form: {
+                                  ...prev.form,
+                                  pagamentoEstado: e.target.value,
+                                  metodoPagamento:
+                                    e.target.value === "POR_PAGAR" ? "" : prev.form.metodoPagamento,
+                                },
+                              }
+                            : prev
+                        )
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                    >
+                      <option value="POR_PAGAR">Por pagar</option>
+                      <option value="PAGO">Paga</option>
+                    </select>
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block font-medium text-gray-700">Método (se paga)</span>
+                    <select
+                      value={editReservaState.form.metodoPagamento}
+                      onChange={(e) =>
+                        setEditReservaState((prev) =>
+                          prev.open
+                            ? { ...prev, form: { ...prev.form, metodoPagamento: e.target.value } }
+                            : prev
+                        )
+                      }
+                      disabled={editReservaState.form.pagamentoEstado !== "PAGO"}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                    >
+                      <option value="">Escolher…</option>
+                      <option value="DINHEIRO_FISICO">Dinheiro físico</option>
+                      <option value="TRANSFERENCIA_BANCARIA">Transferência bancária</option>
+                    </select>
+                  </label>
+                </>
+              ) : null}
             </div>
             <div className="mt-5 flex gap-2">
               <button
@@ -1252,7 +1433,12 @@ function AdminPageInner() {
               <button
                 type="button"
                 onClick={() => void guardarEdicaoReserva()}
-                disabled={savingEditReserva}
+                disabled={
+                  savingEditReserva ||
+                  (editReservaState.form.estado === "APROVADA" &&
+                    editReservaState.form.pagamentoEstado === "PAGO" &&
+                    !editReservaState.form.metodoPagamento)
+                }
                 className="flex-1 rounded-lg bg-[#00923f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a33] disabled:opacity-60"
               >
                 {savingEditReserva ? "A guardar…" : "Guardar alterações"}

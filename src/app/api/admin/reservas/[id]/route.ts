@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { logAdminAction } from "@/lib/admin-audit";
+import {
+  PAGAMENTO_ESTADOS,
+  parseMetodoPagamento,
+} from "@/lib/reservaPagamento";
 
 function toUTCDay(d: Date) {
   const s = d.toISOString().split("T")[0]!;
@@ -45,6 +49,31 @@ export async function PATCH(
   const telefone = (body?.telefone ?? "").toString().trim() || null;
   const observacoes = (body?.observacoes ?? "").toString().trim() || null;
 
+  const hasPagamentoInBody =
+    body && typeof body === "object" && "pagamentoEstado" in body;
+  let pagamentoPatch: { pagamentoEstado: string; metodoPagamento: string | null } | null = null;
+  if (hasPagamentoInBody) {
+    const peRaw = (body.pagamentoEstado ?? "").toString().trim();
+    if (!PAGAMENTO_ESTADOS.includes(peRaw as (typeof PAGAMENTO_ESTADOS)[number])) {
+      return Response.json({ error: "Estado de pagamento inválido." }, { status: 400 });
+    }
+    if (peRaw === "PAGO") {
+      const mp = parseMetodoPagamento(body.metodoPagamento);
+      if (!mp) {
+        return Response.json(
+          {
+            error:
+              "Quando a reserva está paga, escolha o método: dinheiro físico ou transferência bancária.",
+          },
+          { status: 400 }
+        );
+      }
+      pagamentoPatch = { pagamentoEstado: peRaw, metodoPagamento: mp };
+    } else {
+      pagamentoPatch = { pagamentoEstado: peRaw, metodoPagamento: null };
+    }
+  }
+
   if (!["PENDENTE", "APROVADA", "REJEITADA", "CANCELADA"].includes(estado)) {
     return Response.json({ error: "Estado inválido." }, { status: 400 });
   }
@@ -72,6 +101,8 @@ export async function PATCH(
       email: true,
       telefone: true,
       observacoes: true,
+      pagamentoEstado: true,
+      metodoPagamento: true,
     },
   });
   if (!reservaAtual) {
@@ -97,6 +128,16 @@ export async function PATCH(
     }
   }
 
+  const paymentData =
+    estado === "APROVADA"
+      ? pagamentoPatch
+        ? {
+            pagamentoEstado: pagamentoPatch.pagamentoEstado,
+            metodoPagamento: pagamentoPatch.metodoPagamento,
+          }
+        : {}
+      : { pagamentoEstado: "POR_PAGAR", metodoPagamento: null as string | null };
+
   const updated = await prisma.reserva.update({
     where: { id },
     data: {
@@ -107,6 +148,7 @@ export async function PATCH(
       email,
       telefone,
       observacoes,
+      ...paymentData,
     },
     select: {
       id: true,
@@ -117,6 +159,8 @@ export async function PATCH(
       email: true,
       telefone: true,
       observacoes: true,
+      pagamentoEstado: true,
+      metodoPagamento: true,
       user: { select: { id: true, name: true, email: true } },
       roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
     },
@@ -166,6 +210,8 @@ export async function PATCH(
   pushIfChanged("email", prev.email ?? null, next.email ?? null);
   pushIfChanged("telefone", prev.telefone ?? null, next.telefone ?? null);
   pushIfChanged("observacoes", prev.observacoes ?? null, next.observacoes ?? null);
+  pushIfChanged("pagamentoEstado", prev.pagamentoEstado ?? "POR_PAGAR", next.pagamentoEstado ?? "POR_PAGAR");
+  pushIfChanged("metodoPagamento", prev.metodoPagamento ?? null, next.metodoPagamento ?? null);
 
   const changesSummary =
     changes.length > 0

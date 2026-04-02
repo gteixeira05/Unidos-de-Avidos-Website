@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
       email: true,
       telefone: true,
       observacoes: true,
+      pagamentoEstado: true,
+      metodoPagamento: true,
       createdAt: true,
       user: { select: { id: true, name: true, email: true } },
       roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },

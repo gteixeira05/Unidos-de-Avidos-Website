@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
       dataInicio: true,
       dataFim: true,
       createdAt: true,
+      pagamentoEstado: true,
+      metodoPagamento: true,
       roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
     },
   });
