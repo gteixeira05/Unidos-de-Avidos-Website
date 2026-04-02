@@ -99,6 +99,29 @@ type LogsApiResponse = {
   filters: LogFilters;
 };
 
+/** Pagamento considerado fechado: paga com método válido (só editável no modal "Editar reserva"). */
+function pagamentoAlugadaCompleto(r: ReservaAdmin): boolean {
+  if (normalizePagamentoEstado(r.pagamentoEstado) !== "PAGO") return false;
+  const m = r.metodoPagamento;
+  return m === "DINHEIRO_FISICO" || m === "TRANSFERENCIA_BANCARIA";
+}
+
+function AlugadaPagamentoSoloLeitura({ reserva }: { reserva: ReservaAdmin }) {
+  return (
+    <div className="mt-3 rounded-lg border border-[#00923f]/25 bg-[#00923f]/5 p-3">
+      <p className="text-xs font-semibold text-gray-800">Pagamento</p>
+      <p className="mt-1 text-sm text-gray-800">
+        <span className="font-medium text-[#00923f]">Paga</span>
+        {" · "}
+        <span className="font-medium">{labelMetodoPagamento(reserva.metodoPagamento)}</span>
+      </p>
+      <p className="mt-2 text-xs text-gray-500">
+        Para alterar estado ou método de pagamento, use &quot;Editar reserva&quot;.
+      </p>
+    </div>
+  );
+}
+
 function AlugadaPagamentoControls({
   reserva,
   onSaved,
@@ -187,12 +210,6 @@ function AlugadaPagamentoControls({
         >
           {saving ? "A guardar…" : "Guardar pagamento"}
         </button>
-        <span className="text-xs text-gray-500">
-          Atual: {labelPagamentoEstado(reserva.pagamentoEstado)}
-          {normalizePagamentoEstado(reserva.pagamentoEstado) === "PAGO"
-            ? ` · ${labelMetodoPagamento(reserva.metodoPagamento)}`
-            : ""}
-        </span>
       </div>
       {err ? <p className="mt-2 text-xs text-red-600">{err}</p> : null}
     </div>
@@ -884,7 +901,11 @@ function AdminPageInner() {
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Observações:</span> {r.observacoes ?? "—"}
                         </p>
-                        <AlugadaPagamentoControls reserva={r} onSaved={() => void reloadAlugadas()} />
+                        {pagamentoAlugadaCompleto(r) ? (
+                          <AlugadaPagamentoSoloLeitura reserva={r} />
+                        ) : (
+                          <AlugadaPagamentoControls reserva={r} onSaved={() => void reloadAlugadas()} />
+                        )}
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button
                             type="button"
@@ -1252,21 +1273,34 @@ function AdminPageInner() {
         </div>
       ) : null}
 
-      {/* Modal de edição de reserva */}
+      {/* Modal de edição de reserva — corpo com scroll; botões sempre visíveis (mobile) */}
       {editReservaState.open && (
-        <div className="fixed inset-0 z-[65] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-[65] flex items-center justify-center p-3 sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-reserva-titulo"
+        >
           <button
             type="button"
             onClick={closeEditReserva}
             className="absolute inset-0 bg-black/40"
             aria-label="Fechar"
           />
-          <div className="relative w-full max-w-2xl rounded-2xl border border-gray-200 bg-white p-5 shadow-xl">
-            <h2 className="text-lg font-bold text-gray-900">Editar reserva</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              {editReservaState.reserva.roupa.tema} ({editReservaState.reserva.roupa.ano})
-            </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div
+            className="relative flex max-h-[min(92dvh,92vh)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl sm:max-h-[min(88vh,720px)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="shrink-0 border-b border-gray-100 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
+              <h2 id="edit-reserva-titulo" className="text-lg font-bold text-gray-900">
+                Editar reserva
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                {editReservaState.reserva.roupa.tema} ({editReservaState.reserva.roupa.ano})
+              </p>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 sm:px-5">
+            <div className="grid gap-3 sm:grid-cols-2">
               <label className="text-sm">
                 <span className="mb-1 block font-medium text-gray-700">Estado</span>
                 <select
@@ -1421,28 +1455,31 @@ function AdminPageInner() {
                 </>
               ) : null}
             </div>
-            <div className="mt-5 flex gap-2">
-              <button
-                type="button"
-                onClick={closeEditReserva}
-                disabled={savingEditReserva}
-                className="flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-60"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => void guardarEdicaoReserva()}
-                disabled={
-                  savingEditReserva ||
-                  (editReservaState.form.estado === "APROVADA" &&
-                    editReservaState.form.pagamentoEstado === "PAGO" &&
-                    !editReservaState.form.metodoPagamento)
-                }
-                className="flex-1 rounded-lg bg-[#00923f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007a33] disabled:opacity-60"
-              >
-                {savingEditReserva ? "A guardar…" : "Guardar alterações"}
-              </button>
+            </div>
+            <div className="shrink-0 border-t border-gray-100 bg-white px-4 py-3 sm:px-5 sm:py-4 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={closeEditReserva}
+                  disabled={savingEditReserva}
+                  className="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void guardarEdicaoReserva()}
+                  disabled={
+                    savingEditReserva ||
+                    (editReservaState.form.estado === "APROVADA" &&
+                      editReservaState.form.pagamentoEstado === "PAGO" &&
+                      !editReservaState.form.metodoPagamento)
+                  }
+                  className="flex-1 rounded-lg bg-[#00923f] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#007a33] disabled:opacity-60"
+                >
+                  {savingEditReserva ? "A guardar…" : "Guardar alterações"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
