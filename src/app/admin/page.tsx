@@ -254,6 +254,11 @@ function AdminPageInner() {
   const [alugadasError, setAlugadasError] = useState("");
   const [editReservaState, setEditReservaState] = useState<EditReservaState>({ open: false });
   const [savingEditReserva, setSavingEditReserva] = useState(false);
+  const [editReservaSucesso, setEditReservaSucesso] = useState<{
+    open: boolean;
+    tema: string;
+    ano: number;
+  }>({ open: false, tema: "", ano: 0 });
 
   // Utilizadores state
   const [q, setQ] = useState("");
@@ -640,7 +645,10 @@ function AdminPageInner() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Erro ao guardar edição da reserva.");
       await Promise.all([reloadReservas(), reloadAlugadas()]);
+      const tema = editReservaState.reserva.roupa.tema;
+      const ano = editReservaState.reserva.roupa.ano;
       setEditReservaState({ open: false });
+      setEditReservaSucesso({ open: true, tema, ano });
     } catch (e) {
       const message = e instanceof Error ? e.message : "Ocorreu um erro.";
       setReservasError(message);
@@ -1310,7 +1318,7 @@ function AdminPageInner() {
                       prev.open ? { ...prev, form: { ...prev.form, estado: e.target.value } } : prev
                     )
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                 >
                   <option value="PENDENTE">PENDENTE</option>
                   <option value="APROVADA">APROVADA</option>
@@ -1320,7 +1328,7 @@ function AdminPageInner() {
               </label>
               <div className="text-sm text-gray-700">
                 <span className="mb-1 block font-medium text-gray-700">Valor</span>
-                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
                   {Number(editReservaState.reserva.roupa.precoAluguer).toFixed(2)} €
                 </p>
               </div>
@@ -1335,7 +1343,7 @@ function AdminPageInner() {
                         prev.open ? { ...prev, form: { ...prev.form, dataInicio: e.target.value } } : prev
                       )
                     }
-                    className="ua-date-field h-10 min-w-0 flex-1 border-0 bg-transparent px-2 py-2 text-sm outline-none"
+                    className="ua-date-field h-11 min-w-0 flex-1 border-0 bg-transparent px-2 py-2 text-base outline-none sm:h-10 sm:text-sm"
                   />
                 </div>
               </label>
@@ -1350,7 +1358,7 @@ function AdminPageInner() {
                         prev.open ? { ...prev, form: { ...prev.form, dataFim: e.target.value } } : prev
                       )
                     }
-                    className="ua-date-field h-10 min-w-0 flex-1 border-0 bg-transparent px-2 py-2 text-sm outline-none"
+                    className="ua-date-field h-11 min-w-0 flex-1 border-0 bg-transparent px-2 py-2 text-base outline-none sm:h-10 sm:text-sm"
                   />
                 </div>
               </label>
@@ -1364,7 +1372,7 @@ function AdminPageInner() {
                       prev.open ? { ...prev, form: { ...prev.form, nome: e.target.value } } : prev
                     )
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                 />
               </label>
               <label className="text-sm">
@@ -1377,7 +1385,7 @@ function AdminPageInner() {
                       prev.open ? { ...prev, form: { ...prev.form, email: e.target.value } } : prev
                     )
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                 />
               </label>
               <label className="text-sm sm:col-span-2">
@@ -1390,7 +1398,7 @@ function AdminPageInner() {
                       prev.open ? { ...prev, form: { ...prev.form, telefone: e.target.value } } : prev
                     )
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                 />
               </label>
               <label className="text-sm sm:col-span-2">
@@ -1403,7 +1411,7 @@ function AdminPageInner() {
                       prev.open ? { ...prev, form: { ...prev.form, observacoes: e.target.value } } : prev
                     )
                   }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                 />
               </label>
               {editReservaState.form.estado === "APROVADA" ? (
@@ -1427,7 +1435,7 @@ function AdminPageInner() {
                             : prev
                         )
                       }
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                     >
                       <option value="POR_PAGAR">Por pagar</option>
                       <option value="PAGO">Paga</option>
@@ -1445,7 +1453,7 @@ function AdminPageInner() {
                         )
                       }
                       disabled={editReservaState.form.pagamentoEstado !== "PAGO"}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm disabled:bg-gray-100"
                     >
                       <option value="">Escolher…</option>
                       <option value="DINHEIRO_FISICO">Dinheiro físico</option>
@@ -1484,6 +1492,59 @@ function AdminPageInner() {
           </div>
         </div>
       )}
+
+      {/* Confirmação após guardar edição da reserva */}
+      {editReservaSucesso.open ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-reserva-sucesso-titulo"
+        >
+          <button
+            type="button"
+            onClick={() => setEditReservaSucesso({ open: false, tema: "", ano: 0 })}
+            className="absolute inset-0 bg-black/50"
+            aria-label="Fechar"
+          />
+          <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+            <div className="border-b border-[#00923f]/15 bg-[#00923f]/5 px-5 py-5 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#00923f] text-white shadow-sm">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-7 w-7"
+                  aria-hidden
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </div>
+              <h2 id="edit-reserva-sucesso-titulo" className="mt-4 text-lg font-bold text-gray-900">
+                Alterações guardadas
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                A reserva <span className="font-semibold text-gray-800">{editReservaSucesso.tema}</span>{" "}
+                <span className="whitespace-nowrap">({editReservaSucesso.ano})</span> foi atualizada com
+                sucesso.
+              </p>
+            </div>
+            <div className="px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
+              <button
+                type="button"
+                onClick={() => setEditReservaSucesso({ open: false, tema: "", ano: 0 })}
+                className="w-full rounded-xl bg-[#00923f] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#007a33]"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Modal de confirmação (utilizadores) */}
       {confirmState.open && (
