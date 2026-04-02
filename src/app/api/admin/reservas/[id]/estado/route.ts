@@ -85,14 +85,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       dataInicio: true,
       dataFim: true,
       roupa: { select: { tema: true, ano: true } },
+      user: { select: { email: true, name: true } },
     },
   });
 
-  // Ao aprovar, marcar o intervalo como ALUGADA na Disponibilidade
+  // Ao aprovar: marcar o intervalo como ALUGADA — uma leitura + atualização em lote + criações em lote
+  // (o loop dia-a-dia anterior fazia 2 pedidos à BD por dia e era o principal gargalo em períodos longos).
   if (novoEstado === "APROVADA") {
     const inicio = new Date(reserva.dataInicio);
     const fim = new Date(reserva.dataFim);
-    // Normalizar para UTC midnight (YYYY-MM-DD → T00:00:00.000Z)
     const toUTCDay = (d: Date) => {
       const s = d.toISOString().split("T")[0]!;
       return new Date(`${s}T00:00:00.000Z`);
@@ -100,17 +101,49 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const dInicio = toUTCDay(inicio);
     const dFim = toUTCDay(fim);
 
+    const dias: Date[] = [];
     for (let d = dInicio; d <= dFim; d = addDays(d, 1)) {
-      const next = addDays(d, 1);
-      const updated = await prisma.disponibilidade.updateMany({
-        where: { roupaId: reserva.roupaId, data: { gte: d, lt: next } },
+      dias.push(d);
+    }
+
+    const dayKey = (dt: Date) => dt.toISOString().split("T")[0]!;
+
+    const existing = await prisma.disponibilidade.findMany({
+      where: {
+        roupaId: reserva.roupaId,
+        data: { gte: dInicio, lte: dFim },
+      },
+      select: { id: true, data: true, estado: true },
+    });
+
+    const porDia = new Map<string, { id: string; estado: string }>();
+    for (const row of existing) {
+      porDia.set(dayKey(row.data), { id: row.id, estado: row.estado });
+    }
+
+    const idsParaAlugada: string[] = [];
+    const criar: { roupaId: string; data: Date; estado: string }[] = [];
+
+    for (const d of dias) {
+      const key = dayKey(d);
+      const row = porDia.get(key);
+      if (row) {
+        if (row.estado !== "ALUGADA") {
+          idsParaAlugada.push(row.id);
+        }
+      } else {
+        criar.push({ roupaId: reserva.roupaId, data: d, estado: "ALUGADA" });
+      }
+    }
+
+    if (idsParaAlugada.length > 0) {
+      await prisma.disponibilidade.updateMany({
+        where: { id: { in: idsParaAlugada } },
         data: { estado: "ALUGADA" },
       });
-      if (updated.count === 0) {
-        await prisma.disponibilidade.create({
-          data: { roupaId: reserva.roupaId, data: d, estado: "ALUGADA" },
-        });
-      }
+    }
+    if (criar.length > 0) {
+      await prisma.disponibilidade.createMany({ data: criar });
     }
   }
 
@@ -125,26 +158,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     });
 
-    // Email: só envia se RESEND_API_KEY + domínio estiverem configurados (sendEmail ignora se não houver).
-    const utilizador = await prisma.user.findUnique({
-      where: { id: reserva.userId },
-      select: { email: true, name: true },
-    });
+    // Email via Resend: não bloquear a resposta HTTP (a API externa costuma ser o segundo maior atraso).
+    const utilizador = reserva.user;
     if (utilizador?.email) {
-      const inicio = new Date(reserva.dataInicio).toLocaleDateString("pt-PT");
-      const fim = new Date(reserva.dataFim).toLocaleDateString("pt-PT");
+      const inicioFmt = new Date(reserva.dataInicio).toLocaleDateString("pt-PT");
+      const fimFmt = new Date(reserva.dataFim).toLocaleDateString("pt-PT");
       const baseUrl = process.env.APP_URL ?? "";
-      await sendEmail({
+      void sendEmail({
         to: [utilizador.email],
         subject: `Reserva ${novoEstado.toLowerCase()} — ${reserva.roupa.tema} (${reserva.roupa.ano})`,
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.4">
             <p>Olá${utilizador.name ? `, ${utilizador.name}` : ""}.</p>
             <p>O seu pedido de reserva para <strong>${reserva.roupa.tema} (${reserva.roupa.ano})</strong> foi <strong>${novoEstado.toLowerCase()}</strong>.</p>
-            <p><strong>Período:</strong> ${inicio} → ${fim}</p>
+            <p><strong>Período:</strong> ${inicioFmt} → ${fimFmt}</p>
             <p><a href="${baseUrl}/perfil#sec-notificacoes">Ver no site</a></p>
           </div>
         `,
+      }).catch((err) => {
+        console.error("[RESERVA_ESTADO_UPDATE] Falha ao enviar email:", err);
       });
     }
   }
