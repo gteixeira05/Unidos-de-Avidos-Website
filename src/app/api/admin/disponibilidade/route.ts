@@ -153,34 +153,57 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      await prisma.$transaction(async (tx) => {
-        await tx.reserva.create({
-          data: {
-            roupaId,
-            userId: null,
-            dataInicio: inicio,
-            dataFim: fim,
-            estado: "APROVADA",
-            quantidadeHomem: 0,
-            quantidadeMulher: 0,
-            nome,
-            email: email || null,
-            telefone,
-            observacoes,
-          },
-        });
+      // Pré-calcular todos os dias do intervalo
+      const diasDoIntervalo: Date[] = [];
+      for (let d = inicio; d <= fim; d = addDays(d, 1)) {
+        diasDoIntervalo.push(new Date(d.getTime()));
+      }
 
-        for (let d = inicio; d <= fim; d = addDays(d, 1)) {
-          const next = addDays(d, 1);
-          const updated = await tx.disponibilidade.updateMany({
-            where: { roupaId, data: { gte: d, lt: next } },
-            data: { estado: "ALUGADA" },
-          });
-          if (updated.count === 0) {
-            await tx.disponibilidade.create({ data: { roupaId, data: d, estado: "ALUGADA" } });
-          }
-        }
+      // Descobrir quais os dias que já existem em disponibilidade (1 query)
+      const existentes = await prisma.disponibilidade.findMany({
+        where: { roupaId, data: { gte: inicio, lte: fim } },
+        select: { id: true, data: true },
       });
+      const existentesKeys = new Set(existentes.map((e) => toDayKey(e.data)));
+
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.reserva.create({
+            data: {
+              roupaId,
+              userId: null,
+              dataInicio: inicio,
+              dataFim: fim,
+              estado: "APROVADA",
+              quantidadeHomem: 0,
+              quantidadeMulher: 0,
+              nome,
+              email: email || null,
+              telefone,
+              observacoes,
+            },
+          });
+
+          // Atualizar registos existentes em lote (1 query)
+          if (existentes.length > 0) {
+            await tx.disponibilidade.updateMany({
+              where: { id: { in: existentes.map((e) => e.id) } },
+              data: { estado: "ALUGADA" },
+            });
+          }
+
+          // Criar os dias em falta em lote (1 query)
+          const diasNovos = diasDoIntervalo.filter(
+            (d) => !existentesKeys.has(toDayKey(d))
+          );
+          if (diasNovos.length > 0) {
+            await tx.disponibilidade.createMany({
+              data: diasNovos.map((d) => ({ roupaId, data: d, estado: "ALUGADA" })),
+            });
+          }
+        },
+        { maxWait: 10_000, timeout: 30_000 }
+      );
 
       await logAdminAction(session, {
         action: "DISPONIBILIDADE_SET_ALUGADA",
@@ -202,15 +225,29 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  for (let d = inicio; d <= fim; d = addDays(d, 1)) {
-    const next = addDays(d, 1);
-    const updated = await prisma.disponibilidade.updateMany({
-      where: { roupaId, data: { gte: d, lt: next } },
+  // Atualizar disponibilidade em lote (LIVRE, MANUTENCAO ou ALUGADA sem aluguerManual)
+  const existentesGeral = await prisma.disponibilidade.findMany({
+    where: { roupaId, data: { gte: inicio, lte: fim } },
+    select: { id: true, data: true },
+  });
+  const existentesKeysGeral = new Set(existentesGeral.map((e) => toDayKey(e.data)));
+
+  if (existentesGeral.length > 0) {
+    await prisma.disponibilidade.updateMany({
+      where: { id: { in: existentesGeral.map((e) => e.id) } },
       data: { estado },
     });
-    if (updated.count === 0) {
-      await prisma.disponibilidade.create({ data: { roupaId, data: d, estado } });
-    }
+  }
+
+  const diasTodos: Date[] = [];
+  for (let d = inicio; d <= fim; d = addDays(d, 1)) {
+    diasTodos.push(new Date(d.getTime()));
+  }
+  const diasNovosGeral = diasTodos.filter((d) => !existentesKeysGeral.has(toDayKey(d)));
+  if (diasNovosGeral.length > 0) {
+    await prisma.disponibilidade.createMany({
+      data: diasNovosGeral.map((d) => ({ roupaId, data: d, estado })),
+    });
   }
   await logAdminAction(session, {
     action: "DISPONIBILIDADE_UPDATE",
