@@ -31,10 +31,12 @@ export default function CalendarioDisponibilidade({
   useEffect(() => {
     async function fetchDisponibilidade() {
       setLoading(true);
-      const inicio = startOfMonth(mesAtual);
-      const fim = endOfMonth(mesAtual);
+      // Datas civis (não toISOString): evita que fim = "23:59 local" fique, em alguns casos, antes
+      // do 31 às 00:00:00.000Z na base e o último dia do mês não venha do API.
+      const inicioCivil = format(startOfMonth(mesAtual), "yyyy-MM-dd");
+      const fimCivil = format(endOfMonth(mesAtual), "yyyy-MM-dd");
       const res = await fetch(
-        `/api/disponibilidade?roupaId=${roupaId}&inicio=${inicio.toISOString()}&fim=${fim.toISOString()}`
+        `/api/disponibilidade?roupaId=${roupaId}&inicio=${inicioCivil}&fim=${fimCivil}`
       );
       const data: Disponibilidade[] = await res.json();
       const map: Record<string, string> = {};

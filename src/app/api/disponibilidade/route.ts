@@ -20,14 +20,40 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  /**
+   * Quando o cliente envia YYYY-MM-DD, usa o intervalo [início, fim] em calendário civil UTC:
+   * [start T00, próximoDiaFim) para incluir tudo o que cai nesse mês, mesmo com hora ≠ 00:00.
+   */
+  function rangoCivilAUTC(ini: string, fim: string) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(ini) && /^\d{4}-\d{2}-\d{2}$/.test(fim)) {
+      const gte = new Date(`${ini}T00:00:00.000Z`);
+      const ultima = new Date(`${fim}T00:00:00.000Z`);
+      if (Number.isNaN(gte.getTime()) || Number.isNaN(ultima.getTime())) return null;
+      if (gte > ultima) return null;
+      const limiteFim = new Date(ultima);
+      limiteFim.setUTCDate(limiteFim.getUTCDate() + 1);
+      return { gte, lt: limiteFim } as const;
+    }
+    const gte = new Date(ini);
+    const lte = new Date(fim);
+    if (Number.isNaN(gte.getTime()) || Number.isNaN(lte.getTime())) return null;
+    if (gte > lte) return null;
+    return { gte, lte } as const;
+  }
+
+  const rango = rangoCivilAUTC(inicio, fim);
+  if (!rango) {
+    return Response.json(
+      { error: "Parâmetros inicio e fim inválidos" },
+      { status: 400 }
+    );
+  }
+
+  const dataWhere =
+    "lt" in rango ? { gte: rango.gte, lt: rango.lt } : { gte: rango.gte, lte: rango.lte };
+
   const disponibilidades = await prisma.disponibilidade.findMany({
-    where: {
-      roupaId,
-      data: {
-        gte: new Date(inicio),
-        lte: new Date(fim),
-      },
-    },
+    where: { roupaId, data: dataWhere },
   });
 
   // Várias linhas com o mesmo dia civil (só a hora em `data` muda) podem ocorrer; a UI
