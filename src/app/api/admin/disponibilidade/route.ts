@@ -8,6 +8,20 @@ function toDayKey(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+/** Início do dia em UTC, alinhado a data `YYYY-MM-DD` guardada com `T00:00:00.000Z`. */
+function toUTCDay(d: Date) {
+  return new Date(`${d.toISOString().slice(0, 10)}T00:00:00.000Z`);
+}
+
+/** A reserva cobre o dia (UTC) `d` (início) segundo o mesmo critério que a eliminação de reservas. */
+function reservaCobreInicioDia(
+  d: Date,
+  r: { dataInicio: Date; dataFim: Date }
+) {
+  const next = addDays(d, 1);
+  return r.dataInicio < next && r.dataFim >= d;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getSessionFromRequest(req);
   if (!session) return Response.json({ error: "Não autenticado." }, { status: 401 });
@@ -83,12 +97,25 @@ export async function POST(req: NextRequest) {
       orderBy: { data: "asc" },
     });
 
-    if (conflitos.length > 0) {
+    // Só contar ALUGADA no calendário se houver reserva APROVADA a cobrir o dia. Caso contrário
+    // é estado órfão (ex.: apagou a reserva mas ficou lixo/duplicado em disponibilidade), e
+    // pode ser substituído. MANUTENCAO continua a bloquear sempre.
+    const aprovadas = await prisma.reserva.findMany({
+      where: { roupaId, estado: "APROVADA" },
+      select: { dataInicio: true, dataFim: true },
+    });
+    const conflitosReais = conflitos.filter((c) => {
+      if (c.estado === "MANUTENCAO") return true;
+      const d = toUTCDay(c.data);
+      return aprovadas.some((r) => reservaCobreInicioDia(d, r));
+    });
+
+    if (conflitosReais.length > 0) {
       return Response.json(
         {
           error:
             "As datas selecionadas já estão ocupadas (alugadas/manutenção). Escolha outro intervalo.",
-          conflitos: conflitos.map((c) => ({
+          conflitos: conflitosReais.map((c) => ({
             data: c.data.toISOString().slice(0, 10),
             estado: c.estado,
           })),
