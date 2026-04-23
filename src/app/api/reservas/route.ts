@@ -7,7 +7,7 @@ import {
   getAdminTeamForReservaNotify,
 } from "@/lib/admin-notify-recipients";
 import { consumeRateLimit, escapeHtml, getClientIp, normalizeEmail } from "@/lib/security";
-import { PRECO_ALUGUER_PUBLICO } from "@/lib/aluguerRoupasPublic";
+import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -140,6 +140,7 @@ export async function POST(request: NextRequest) {
         const userSafeName = escapeHtml(user?.name ?? "-");
         const userSafeEmail = escapeHtml(user?.email ?? "-");
         const roupaTemaSafe = escapeHtml(String(roupa.tema));
+        const precoRef = escapeHtml(formatPrecoAluguerPublico(Number(roupa.precoAluguer)));
         await sendEmail({
           to: emails,
           subject: `Novo pedido de reserva — ${roupa.tema} (${roupa.ano})`,
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
               <p><strong>Utilizador:</strong> ${userSafeName} (${userSafeEmail})</p>
               <p><strong>Roupa:</strong> ${roupaTemaSafe} (${roupa.ano})</p>
               <p><strong>Período:</strong> ${inicio} → ${fim}</p>
-              <p><strong>Preço total:</strong> ${escapeHtml(PRECO_ALUGUER_PUBLICO)} (a acordar)</p>
+              <p><strong>Preço de referência (aluguer anual):</strong> ${precoRef}</p>
               <p><a href="${process.env.APP_URL ?? ""}/admin/reservas">Abrir painel de reservas</a></p>
             </div>
           `,

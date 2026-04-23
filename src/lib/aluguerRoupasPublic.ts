@@ -1,6 +1,12 @@
 /** Textos e valores mostrados nas páginas públicas de aluguer de roupas. */
 
-export const PRECO_ALUGUER_PUBLICO = "Ainda não estão definidos";
+/** Formata o preço da BD para exibição pública (€, estilo português). */
+export function formatPrecoAluguerPublico(preco: number): string {
+  return `${Number(preco).toLocaleString("pt-PT", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} €`;
+}
 
 /** Estimativas de inventário (todas as coleções / anos). */
 export const ESTIMATIVA_QUANTIDADE_MULHER = 55;

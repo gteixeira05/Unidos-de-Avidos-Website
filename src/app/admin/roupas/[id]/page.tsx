@@ -138,33 +138,6 @@ export default function AdminEditarRoupaPage({ params }: { params: { id: string 
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Fardas homem</label>
-            <input
-              type="number"
-              min={0}
-              value={item.quantidadeHomem}
-              onChange={(e) =>
-                setItem({ ...item, quantidadeHomem: Math.max(0, Math.floor(Number(e.target.value)) || 0) })
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Fardas mulher</label>
-            <input
-              type="number"
-              min={0}
-              value={item.quantidadeMulher}
-              onChange={(e) =>
-                setItem({ ...item, quantidadeMulher: Math.max(0, Math.floor(Number(e.target.value)) || 0) })
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
-        </div>
-
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">Descrição</label>
           <textarea

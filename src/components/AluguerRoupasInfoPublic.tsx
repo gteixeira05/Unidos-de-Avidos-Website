@@ -2,17 +2,23 @@ import Link from "next/link";
 import {
   ESTIMATIVA_QUANTIDADE_HOMEM,
   ESTIMATIVA_QUANTIDADE_MULHER,
-  PRECO_ALUGUER_PUBLICO,
+  formatPrecoAluguerPublico,
   QUANTIDADE_ARCOS_POR_ANO,
   temArcosParaAlugar,
 } from "@/lib/aluguerRoupasPublic";
 
 type Variant = "catalog" | "detail";
 
-export function PrecoAluguerPublico({ className }: { className?: string }) {
+export function PrecoAluguerRoupa({
+  precoAluguer,
+  className,
+}: {
+  precoAluguer: number;
+  className?: string;
+}) {
   return (
     <span className={className} translate="no">
-      {PRECO_ALUGUER_PUBLICO}
+      {formatPrecoAluguerPublico(precoAluguer)}
     </span>
   );
 }

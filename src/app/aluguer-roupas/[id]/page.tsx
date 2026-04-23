@@ -6,10 +6,7 @@ import FormularioReserva from "./FormularioReserva";
 import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
-import {
-  PrecoAluguerPublico,
-  StockFardasDetalhe,
-} from "@/components/AluguerRoupasInfoPublic";
+import { PrecoAluguerRoupa, StockFardasDetalhe } from "@/components/AluguerRoupasInfoPublic";
 
 export const revalidate = 120;
 
@@ -78,9 +75,9 @@ export default async function RoupaDetalhePage({
               <div>
                 <h4 className="font-semibold text-gray-900">Condição de aluguer</h4>
                 <p className="text-sm text-gray-600">
-                  O preço do aluguer ainda não está definido; será acordado connosco
-                  após o pedido. O valor é referente ao ano completo, independentemente
-                  da quantidade de fardas levantadas.
+                  O preço de referência abaixo é o valor anual de aluguer, independentemente
+                  da quantidade de fardas levantadas. A reserva sujeita-se a aprovação e
+                  confirmação de stock pela equipa.
                 </p>
               </div>
               {roupa.conjuntoInclui && (
@@ -102,7 +99,7 @@ export default async function RoupaDetalhePage({
             </div>
 
             <p className="mt-6 text-xl font-bold text-[#00923f]">
-              <PrecoAluguerPublico />
+              <PrecoAluguerRoupa precoAluguer={roupa.precoAluguer} />
             </p>
 
             <a
@@ -157,6 +154,7 @@ export default async function RoupaDetalhePage({
               id: roupa.id,
               ano: roupa.ano,
               tema: tituloExibicao,
+              precoAluguer: roupa.precoAluguer,
             }}
           />
         </div>

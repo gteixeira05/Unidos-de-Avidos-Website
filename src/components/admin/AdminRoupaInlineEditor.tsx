@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   labelMetodoPagamento,
   labelPagamentoEstado,
@@ -123,6 +124,7 @@ function ConfirmModal({
 }
 
 export default function AdminRoupaInlineEditor({ roupa }: Props) {
+  const router = useRouter();
   // ---- Editar roupa ----
   const [form, setForm] = useState({
     ano: String(roupa.ano),
@@ -130,8 +132,6 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
     conjuntoInclui: roupa.conjuntoInclui ?? "",
     regrasLavagem: roupa.regrasLavagem ?? "",
     precoAluguer: String(roupa.precoAluguer),
-    quantidadeHomem: String(roupa.quantidadeHomem),
-    quantidadeMulher: String(roupa.quantidadeMulher),
   });
 
   const [msg, setMsg] = useState("");
@@ -325,14 +325,13 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
             conjuntoInclui: form.conjuntoInclui,
             regrasLavagem: form.regrasLavagem,
             precoAluguer: Number(form.precoAluguer),
-            quantidadeHomem: Number(form.quantidadeHomem),
-            quantidadeMulher: Number(form.quantidadeMulher),
           }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Erro ao guardar.");
         setMsg("Guardado com sucesso.");
         setErr("");
+        router.refresh();
       }
 
       if (confirmState.kind === "UPDATE_DISP") {
@@ -544,39 +543,6 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
               />
             </div>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Fardas disponíveis (homem)
-              </label>
-              <input
-                type="number"
-                min={0}
-                step={1}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                value={form.quantidadeHomem}
-                onChange={(e) => setForm({ ...form, quantidadeHomem: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Fardas disponíveis (mulher)
-              </label>
-              <input
-                type="number"
-                min={0}
-                step={1}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                value={form.quantidadeMulher}
-                onChange={(e) => setForm({ ...form, quantidadeMulher: e.target.value })}
-              />
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">
-            Número indicativo de conjuntos em stock para cada género. Atualize quando o inventário
-            mudar.
-          </p>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Descrição</label>

@@ -5,11 +5,13 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 import PrivacyConsentField from "@/components/PrivacyConsentField";
 import TermsConsentField from "@/components/TermsConsentField";
+import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
 
 interface Roupa {
   id: string;
   ano: number;
   tema: string;
+  precoAluguer: number;
 }
 
 export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
@@ -157,9 +159,12 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
       </h3>
       <p className="mb-4 text-sm text-gray-600">
         O pedido não confirma a reserva de imediato. A equipa validará o stock
-        e contactá-lo-á para aprovação. O preço de aluguer ainda não está
-        definido; será acordado convosco. O valor será referente ao ano completo,
-        independentemente da quantidade de fardas levantadas.
+        e contactá-lo-á para aprovação. O preço de aluguer anual de referência
+        desta farda é{" "}
+        <strong className="text-gray-800">{formatPrecoAluguerPublico(roupa.precoAluguer)}</strong>
+        {", "}
+        referente ao ano completo, independentemente da quantidade de fardas
+        levantadas.
       </p>
 
       <div className="mb-5 flex gap-3 rounded-lg border border-[#00923f]/20 bg-[#00923f]/[0.06] p-4 text-sm text-gray-700">
@@ -287,7 +292,9 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
         />
 
         <p className="text-sm text-gray-500">
-          Preço do aluguer: ainda não definido (será acordado após análise do pedido).
+          Preço de referência do aluguer anual:{" "}
+          {formatPrecoAluguerPublico(roupa.precoAluguer)} (o pedido continua
+          sujeito a aprovação e confirmação de stock).
         </p>
 
         <button

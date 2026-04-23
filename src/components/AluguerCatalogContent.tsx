@@ -8,7 +8,7 @@ import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
 import { useResolvedAdmin } from "@/hooks/useResolvedAdmin";
 import {
   BlocoStockCriancasArcos,
-  PrecoAluguerPublico,
+  PrecoAluguerRoupa,
   StockEstimativasCatalogo,
 } from "@/components/AluguerRoupasInfoPublic";
 
@@ -71,7 +71,7 @@ export default function AluguerCatalogContent({
                 </p>
               <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
                 <span className="text-base font-bold text-[#00923f]">
-                  <PrecoAluguerPublico />
+                  <PrecoAluguerRoupa precoAluguer={roupa.precoAluguer} />
                 </span>
                 <span className="text-xs text-gray-500">Preço do aluguer</span>
               </div>

@@ -17,8 +17,9 @@ export default async function AluguerRoupasPage() {
           Aluguer de Roupas
         </h1>
         <p className="mt-4 text-lg text-gray-600">
-          Catálogo das nossas fardas dos anos anteriores. Os preços de aluguer
-          ainda não estão definidos; encontrará estimativas de stock e pode{" "}
+          Catálogo das nossas fardas dos anos anteriores. O preço de aluguer
+          anual de cada farda está indicado em cada cartão; encontrará estimativas
+          de stock e pode{" "}
           <a
             href="/fale-connosco"
             className="font-medium text-[#00923f] underline decoration-[#00923f]/35 underline-offset-2 hover:decoration-[#00923f]"
