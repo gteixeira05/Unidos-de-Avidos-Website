@@ -4,10 +4,12 @@ import { useState } from "react";
 import { ChevronDown, Mail, MessageCircle, Phone } from "lucide-react";
 import PrivacyConsentField from "@/components/PrivacyConsentField";
 
-const TELEFONE = "914 884 537";
-const TELEFONE_LIMPO = "351914884537";
+const TELEFONE_1 = "914 884 537";
+const TELEFONE_1_LIMPO = "351914884537";
+const TELEFONE_2 = "914 838 942";
+const TELEFONE_2_LIMPO = "351914838942";
 const EMAIL = "unidosdeavidos@gmail.com";
-const WHATSAPP_URL = `https://wa.me/${TELEFONE_LIMPO}`;
+const WHATSAPP_URL = `https://wa.me/${TELEFONE_2_LIMPO}`;
 
 export default function FaleConnoscoPage() {
   const [enviado, setEnviado] = useState(false);
@@ -49,11 +51,18 @@ export default function FaleConnoscoPage() {
         <ChevronDown className="mx-auto mt-3 h-8 w-8 text-[#00923f]" strokeWidth={2.5} />
         <div className="mt-8 flex flex-col items-center gap-6 sm:gap-8">
           <a
-            href={`tel:+${TELEFONE_LIMPO}`}
+            href={`tel:+${TELEFONE_1_LIMPO}`}
             className="flex items-center gap-3 text-gray-700 transition-colors hover:text-[#00923f]"
           >
             <Phone className="h-6 w-6 shrink-0 text-[#00923f]" strokeWidth={2} />
-            <span className="text-lg">{TELEFONE}</span>
+            <span className="text-lg">{TELEFONE_1}</span>
+          </a>
+          <a
+            href={`tel:+${TELEFONE_2_LIMPO}`}
+            className="flex items-center gap-3 text-gray-700 transition-colors hover:text-[#00923f]"
+          >
+            <Phone className="h-6 w-6 shrink-0 text-[#00923f]" strokeWidth={2} />
+            <span className="text-lg">{TELEFONE_2}</span>
           </a>
           <a
             href={`mailto:${EMAIL}`}

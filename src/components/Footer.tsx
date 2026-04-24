@@ -50,6 +50,12 @@ export default function Footer() {
                 +351 914 884 537
               </a>
             </p>
+            <p className="flex items-center gap-3 text-sm text-gray-700">
+              <Phone size={18} className="text-[#00923f]" />
+              <a href="tel:+351914838942" className="hover:text-[#00923f]">
+                +351 914 838 942
+              </a>
+            </p>
           </div>
 
           {/* Páginas */}
@@ -126,7 +132,7 @@ export default function Footer() {
                 <Instagram size={18} />
               </Link>
               <Link
-                href="https://wa.me/351914884537"
+                href="https://wa.me/351914838942"
                 target="_blank"
                 rel="noreferrer"
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-[#00923f] hover:text-[#00923f]"

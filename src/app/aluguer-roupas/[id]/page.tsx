@@ -68,7 +68,7 @@ export default async function RoupaDetalhePage({
               Ano {roupa.ano}
             </span>
             {temCalcadoDisponivel(roupa.ano) ? (
-              <p className="mt-2 inline-flex rounded-full border border-[#00923f]/20 bg-[#00923f]/10 px-2.5 py-1 text-xs font-semibold text-[#007a33]">
+              <p className="mt-3 inline-flex rounded-full border border-[#00923f]/20 bg-[#00923f]/10 px-2.5 py-1 text-xs font-semibold text-[#007a33]">
                 Calçado disponível
               </p>
             ) : null}
@@ -110,7 +110,7 @@ export default async function RoupaDetalhePage({
             </p>
 
             <a
-              href={`https://wa.me/351914884537?text=${encodeURIComponent(`Quero saber mais informações acerca da roupa de ${roupa.ano}!`)}`}
+              href={`https://wa.me/351914838942?text=${encodeURIComponent(`Quero saber mais informações acerca da roupa de ${roupa.ano}!`)}`}
               target="_blank"
               rel="noreferrer"
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-3 font-medium text-white transition-colors hover:bg-[#20BD5A]"
