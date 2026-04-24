@@ -7,7 +7,11 @@ import {
   getAdminTeamForReservaNotify,
 } from "@/lib/admin-notify-recipients";
 import { consumeRateLimit, escapeHtml, getClientIp, normalizeEmail } from "@/lib/security";
-import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
+import {
+  formatPrecoAluguerPublico,
+  getPrecoCalcadoPorAno,
+  temCalcadoDisponivel,
+} from "@/lib/aluguerRoupasPublic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +42,7 @@ export async function POST(request: NextRequest) {
       nome,
       email,
       telefone,
+      incluiCalcado,
     } = body;
 
     if (!roupaId || !dataInicio || !dataFim) {
@@ -64,6 +69,16 @@ export async function POST(request: NextRequest) {
     if (!roupa) {
       return Response.json({ error: "Roupa não encontrada" }, { status: 404 });
     }
+
+    const querCalcado = Boolean(incluiCalcado);
+    const precoCalcado = getPrecoCalcadoPorAno(roupa.ano);
+    if (querCalcado && !temCalcadoDisponivel(roupa.ano)) {
+      return Response.json(
+        { error: "Para este ano não há calçado disponível para aluguer." },
+        { status: 400 }
+      );
+    }
+    const custoExtraCalcado = querCalcado ? (precoCalcado ?? 0) : 0;
 
     const inicio = new Date(dataInicio);
     const fim = new Date(dataFim);
@@ -110,6 +125,8 @@ export async function POST(request: NextRequest) {
         nome: typeof nome === "string" ? nome.trim().slice(0, 120) || null : null,
         email: emailLimpo,
         telefone: telefoneLimpo,
+        incluiCalcado: querCalcado,
+        custoExtraCalcado,
       },
     });
 
@@ -141,6 +158,10 @@ export async function POST(request: NextRequest) {
         const userSafeEmail = escapeHtml(user?.email ?? "-");
         const roupaTemaSafe = escapeHtml(String(roupa.tema));
         const precoRef = escapeHtml(formatPrecoAluguerPublico(Number(roupa.precoAluguer)));
+        const precoCalcadoFmt = escapeHtml(formatPrecoAluguerPublico(Number(custoExtraCalcado)));
+        const totalFmt = escapeHtml(
+          formatPrecoAluguerPublico(Number(roupa.precoAluguer) + Number(custoExtraCalcado))
+        );
         await sendEmail({
           to: emails,
           subject: `Novo pedido de reserva — ${roupa.tema} (${roupa.ano})`,
@@ -151,6 +172,8 @@ export async function POST(request: NextRequest) {
               <p><strong>Roupa:</strong> ${roupaTemaSafe} (${roupa.ano})</p>
               <p><strong>Período:</strong> ${inicio} → ${fim}</p>
               <p><strong>Preço de referência (aluguer anual):</strong> ${precoRef}</p>
+              <p><strong>Calçado:</strong> ${querCalcado ? `Sim (+${precoCalcadoFmt})` : "Não"}</p>
+              <p><strong>Total de referência:</strong> ${totalFmt}</p>
               <p><a href="${process.env.APP_URL ?? ""}/admin/reservas">Abrir painel de reservas</a></p>
             </div>
           `,

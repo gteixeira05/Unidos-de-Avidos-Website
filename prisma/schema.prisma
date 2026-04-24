@@ -99,6 +99,8 @@ model Reserva {
   email       String?  // Email do solicitante (visitantes)
   telefone    String?  // Telefone do solicitante (visitantes)
   observacoes String?
+  incluiCalcado Boolean @default(false)
+  custoExtraCalcado Float @default(0)
   // Pagamento (relevante sobretudo para reservas APROVADA / alugadas)
   pagamentoEstado String @default("POR_PAGAR") // POR_PAGAR | PAGO
   metodoPagamento String? // DINHEIRO_FISICO | TRANSFERENCIA_BANCARIA (quando PAGO)

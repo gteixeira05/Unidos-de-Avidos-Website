@@ -19,3 +19,20 @@ export const QUANTIDADE_ARCOS_POR_ANO = 10;
 export function temArcosParaAlugar(ano: number): boolean {
   return ANOS_COM_ARCOS_ALUGUER.includes(ano);
 }
+
+/** Preços extra para aluguer de calçado por ano. */
+export const PRECO_CALCADO_POR_ANO: Readonly<Record<number, number>> = {
+  2017: 100,
+  2018: 100,
+  2019: 150,
+  2024: 150,
+  2025: 150,
+};
+
+export function getPrecoCalcadoPorAno(ano: number): number | null {
+  return PRECO_CALCADO_POR_ANO[ano] ?? null;
+}
+
+export function temCalcadoDisponivel(ano: number): boolean {
+  return getPrecoCalcadoPorAno(ano) !== null;
+}

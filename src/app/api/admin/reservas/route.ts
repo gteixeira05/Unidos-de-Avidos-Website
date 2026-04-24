@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
       email: true,
       telefone: true,
       observacoes: true,
+      incluiCalcado: true,
+      custoExtraCalcado: true,
       pagamentoEstado: true,
       metodoPagamento: true,
       createdAt: true,

@@ -5,7 +5,11 @@ import Link from "next/link";
 import { Bell } from "lucide-react";
 import PrivacyConsentField from "@/components/PrivacyConsentField";
 import TermsConsentField from "@/components/TermsConsentField";
-import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
+import {
+  formatPrecoAluguerPublico,
+  getPrecoCalcadoPorAno,
+  temCalcadoDisponivel,
+} from "@/lib/aluguerRoupasPublic";
 
 interface Roupa {
   id: string;
@@ -27,6 +31,11 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
   const [loading, setLoading] = useState(false);
   const [consentimentoPrivacidade, setConsentimentoPrivacidade] = useState(false);
   const [aceitaTermos, setAceitaTermos] = useState(false);
+  const [incluiCalcado, setIncluiCalcado] = useState(false);
+
+  const precoCalcado = getPrecoCalcadoPorAno(roupa.ano);
+  const calcadoDisponivel = temCalcadoDisponivel(roupa.ano);
+  const totalReserva = roupa.precoAluguer + (incluiCalcado && precoCalcado ? precoCalcado : 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +90,7 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           nome,
           email,
           telefone,
+          incluiCalcado,
         }),
       });
 
@@ -166,6 +176,19 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
         referente ao ano completo, independentemente da quantidade de fardas
         levantadas.
       </p>
+      {calcadoDisponivel ? (
+        <p className="mb-4 text-sm text-gray-600">
+          Pode também adicionar calçado à reserva por{" "}
+          <strong className="text-gray-800">
+            {formatPrecoAluguerPublico(precoCalcado ?? 0)}
+          </strong>
+          {" "}adicionais.
+        </p>
+      ) : (
+        <p className="mb-4 text-sm text-gray-600">
+          Para este ano não existe calçado disponível para aluguer.
+        </p>
+      )}
 
       <div className="mb-5 flex gap-3 rounded-lg border border-[#00923f]/20 bg-[#00923f]/[0.06] p-4 text-sm text-gray-700">
         <Bell
@@ -272,6 +295,23 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           />
         </div>
 
+        {calcadoDisponivel ? (
+          <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+            <span className="text-sm text-gray-800">
+              Adicionar calçado à reserva
+              <span className="block text-xs text-gray-500">
+                Acréscimo: {formatPrecoAluguerPublico(precoCalcado ?? 0)}
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={incluiCalcado}
+              onChange={(e) => setIncluiCalcado(e.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-[#00923f]"
+            />
+          </label>
+        ) : null}
+
         {erro && (
           <p className="text-sm text-red-600">{erro}</p>
         )}
@@ -292,9 +332,12 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
         />
 
         <p className="text-sm text-gray-500">
-          Preço de referência do aluguer anual:{" "}
-          {formatPrecoAluguerPublico(roupa.precoAluguer)} (o pedido continua
-          sujeito a aprovação e confirmação de stock).
+          Preço de referência do aluguer anual: {formatPrecoAluguerPublico(roupa.precoAluguer)}
+          {calcadoDisponivel
+            ? ` + ${formatPrecoAluguerPublico(precoCalcado ?? 0)} de calçado (opcional).`
+            : "."}{" "}
+          Total selecionado: <strong>{formatPrecoAluguerPublico(totalReserva)}</strong> (o pedido
+          continua sujeito a aprovação e confirmação de stock).
         </p>
 
         <button

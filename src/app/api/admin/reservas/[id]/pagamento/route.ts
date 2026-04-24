@@ -77,6 +77,8 @@ export async function PATCH(
       email: true,
       telefone: true,
       observacoes: true,
+      incluiCalcado: true,
+      custoExtraCalcado: true,
       user: { select: { id: true, name: true, email: true } },
       roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
     },

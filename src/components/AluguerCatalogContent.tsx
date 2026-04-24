@@ -11,6 +11,7 @@ import {
   PrecoAluguerRoupa,
   StockEstimativasCatalogo,
 } from "@/components/AluguerRoupasInfoPublic";
+import { temCalcadoDisponivel } from "@/lib/aluguerRoupasPublic";
 
 export type RoupaCatalogRow = {
   id: string;
@@ -66,6 +67,11 @@ export default function AluguerCatalogContent({
               <h3 className="mt-1 text-xl font-semibold text-gray-900">
                 {tituloAluguerParaAno(roupa.ano, roupa.tema ?? "")}
               </h3>
+              {temCalcadoDisponivel(roupa.ano) ? (
+                <p className="mt-2 inline-flex rounded-full border border-[#00923f]/20 bg-[#00923f]/10 px-2.5 py-1 text-xs font-semibold text-[#007a33]">
+                  Calçado disponível
+                </p>
+              ) : null}
                 <p className="mt-2 line-clamp-2 text-sm text-gray-600">
                   {roupa.descricao ?? ""}
                 </p>

@@ -9,6 +9,7 @@ import {
   labelPagamentoEstado,
   normalizePagamentoEstado,
 } from "@/lib/reservaPagamento";
+import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
 
 interface User {
   id: string;
@@ -37,6 +38,8 @@ type ReservaItem = {
   dataInicio: string;
   dataFim: string;
   createdAt: string;
+  incluiCalcado?: boolean;
+  custoExtraCalcado?: number;
   pagamentoEstado?: string | null;
   metodoPagamento?: string | null;
   roupa: { id: string; ano: number; tema: string; precoAluguer: number };
@@ -621,8 +624,20 @@ export default function PerfilPage() {
                   {new Date(r.dataFim).toLocaleDateString("pt-PT")}
                 </p>
                 <p className="mt-1 text-sm text-gray-700">
-                  Valor:{" "}
-                  <span className="font-medium">Ainda não definido (a acordar)</span>
+                  Valor de referência:{" "}
+                  <span className="font-medium">
+                    {formatPrecoAluguerPublico(
+                      Number(r.roupa.precoAluguer) + Number(r.custoExtraCalcado ?? 0)
+                    )}
+                  </span>
+                </p>
+                <p className="mt-1 text-sm text-gray-700">
+                  Calçado:{" "}
+                  <span className="font-medium">
+                    {r.incluiCalcado
+                      ? `Sim (+${formatPrecoAluguerPublico(Number(r.custoExtraCalcado ?? 0))})`
+                      : "Não"}
+                  </span>
                 </p>
                 {r.estado === "APROVADA" ? (
                   <>

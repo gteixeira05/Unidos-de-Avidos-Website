@@ -9,6 +9,10 @@ import {
   normalizePagamentoEstado,
   type PagamentoEstado,
 } from "@/lib/reservaPagamento";
+import {
+  getPrecoCalcadoPorAno,
+  temCalcadoDisponivel,
+} from "@/lib/aluguerRoupasPublic";
 
 type AdminTab = "reservas" | "alugadas" | "utilizadores" | "logs";
 
@@ -22,6 +26,8 @@ type ReservaAdmin = {
   nome?: string | null;
   email?: string | null;
   telefone?: string | null;
+  incluiCalcado?: boolean;
+  custoExtraCalcado?: number;
   pagamentoEstado?: string | null;
   metodoPagamento?: string | null;
   createdAt: string;
@@ -73,6 +79,7 @@ type EditReservaState =
         email: string;
         telefone: string;
         observacoes: string;
+        incluiCalcado: boolean;
         pagamentoEstado: string;
         metodoPagamento: string;
       };
@@ -104,6 +111,10 @@ function pagamentoAlugadaCompleto(r: ReservaAdmin): boolean {
   if (normalizePagamentoEstado(r.pagamentoEstado) !== "PAGO") return false;
   const m = r.metodoPagamento;
   return m === "DINHEIRO_FISICO" || m === "TRANSFERENCIA_BANCARIA";
+}
+
+function totalReservaReferencia(r: ReservaAdmin): number {
+  return Number(r.roupa.precoAluguer) + Number(r.custoExtraCalcado ?? 0);
 }
 
 function AlugadaPagamentoSoloLeitura({ reserva }: { reserva: ReservaAdmin }) {
@@ -611,6 +622,7 @@ function AdminPageInner() {
         email: reserva.email ?? reserva.user?.email ?? "",
         telefone: reserva.telefone ?? "",
         observacoes: reserva.observacoes ?? "",
+        incluiCalcado: Boolean(reserva.incluiCalcado),
         pagamentoEstado: normalizePagamentoEstado(reserva.pagamentoEstado),
         metodoPagamento: reserva.metodoPagamento ?? "",
       },
@@ -804,8 +816,18 @@ function AdminPageInner() {
                     {new Date(r.dataFim).toLocaleDateString("pt-PT")}
                   </p>
                   <p className="mt-1 text-sm text-gray-700">
-                    <span className="font-medium">Valor:</span>{" "}
+                    <span className="font-medium">Valor base:</span>{" "}
                     {Number(r.roupa.precoAluguer).toFixed(2)} €
+                  </p>
+                  <p className="mt-1 text-sm text-gray-700">
+                    <span className="font-medium">Calçado:</span>{" "}
+                    {r.incluiCalcado
+                      ? `Sim (+${Number(r.custoExtraCalcado ?? 0).toFixed(2)} €)`
+                      : "Não"}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-700">
+                    <span className="font-medium">Total referência:</span>{" "}
+                    {totalReservaReferencia(r).toFixed(2)} €
                   </p>
                   <p className="mt-2 text-sm text-gray-700">
                     <span className="font-medium">Observações:</span> {r.observacoes ?? "—"}
@@ -912,8 +934,18 @@ function AdminPageInner() {
                           {new Date(r.dataFim).toLocaleDateString("pt-PT")}
                         </p>
                         <p className="mt-1 text-sm text-gray-700">
-                          <span className="font-medium">Valor:</span>{" "}
+                          <span className="font-medium">Valor base:</span>{" "}
                           {Number(r.roupa.precoAluguer).toFixed(2)} €
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Calçado:</span>{" "}
+                          {r.incluiCalcado
+                            ? `Sim (+${Number(r.custoExtraCalcado ?? 0).toFixed(2)} €)`
+                            : "Não"}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Total referência:</span>{" "}
+                          {totalReservaReferencia(r).toFixed(2)} €
                         </p>
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Observações:</span> {r.observacoes ?? "—"}
@@ -1336,9 +1368,30 @@ function AdminPageInner() {
                 </select>
               </label>
               <div className="text-sm text-gray-700">
-                <span className="mb-1 block font-medium text-gray-700">Valor</span>
+                <span className="mb-1 block font-medium text-gray-700">Valor base</span>
                 <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
                   {Number(editReservaState.reserva.roupa.precoAluguer).toFixed(2)} €
+                </p>
+              </div>
+              <div className="text-sm text-gray-700">
+                <span className="mb-1 block font-medium text-gray-700">Calçado</span>
+                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
+                  {editReservaState.form.incluiCalcado
+                    ? `Sim (+${Number(getPrecoCalcadoPorAno(editReservaState.reserva.roupa.ano) ?? 0).toFixed(2)} €)`
+                    : "Não"}
+                </p>
+              </div>
+              <div className="text-sm text-gray-700">
+                <span className="mb-1 block font-medium text-gray-700">Total referência</span>
+                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
+                  {(
+                    Number(editReservaState.reserva.roupa.precoAluguer) +
+                    Number(
+                      editReservaState.form.incluiCalcado
+                        ? (getPrecoCalcadoPorAno(editReservaState.reserva.roupa.ano) ?? 0)
+                        : 0
+                    )
+                  ).toFixed(2)} €
                 </p>
               </div>
               <label className="min-w-0 text-sm">
@@ -1422,6 +1475,37 @@ function AdminPageInner() {
                   }
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                 />
+              </label>
+              <label className="text-sm sm:col-span-2">
+                <span className="mb-1 block font-medium text-gray-700">Calçado</span>
+                {temCalcadoDisponivel(editReservaState.reserva.roupa.ano) ? (
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                    <label className="flex items-center justify-between gap-3 text-sm text-gray-700">
+                      <span>
+                        Incluir calçado nesta reserva
+                        <span className="ml-1 text-xs text-gray-500">
+                          (+{Number(getPrecoCalcadoPorAno(editReservaState.reserva.roupa.ano) ?? 0).toFixed(2)} €)
+                        </span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={editReservaState.form.incluiCalcado}
+                        onChange={(e) =>
+                          setEditReservaState((prev) =>
+                            prev.open
+                              ? { ...prev, form: { ...prev.form, incluiCalcado: e.target.checked } }
+                              : prev
+                          )
+                        }
+                        className="h-4 w-4 accent-[#00923f]"
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+                    Não disponível para este ano.
+                  </p>
+                )}
               </label>
               {editReservaState.form.estado === "APROVADA" ? (
                 <>

@@ -8,6 +8,10 @@ import {
   PAGAMENTO_ESTADOS,
   parseMetodoPagamento,
 } from "@/lib/reservaPagamento";
+import {
+  getPrecoCalcadoPorAno,
+  temCalcadoDisponivel,
+} from "@/lib/aluguerRoupasPublic";
 
 function toUTCDay(d: Date) {
   const s = d.toISOString().split("T")[0]!;
@@ -48,6 +52,8 @@ export async function PATCH(
   const email = (body?.email ?? "").toString().trim() || null;
   const telefone = (body?.telefone ?? "").toString().trim() || null;
   const observacoes = (body?.observacoes ?? "").toString().trim() || null;
+  const hasIncluiCalcadoInBody =
+    body && typeof body === "object" && "incluiCalcado" in body;
 
   const hasPagamentoInBody =
     body && typeof body === "object" && "pagamentoEstado" in body;
@@ -101,8 +107,18 @@ export async function PATCH(
       email: true,
       telefone: true,
       observacoes: true,
+      incluiCalcado: true,
+      custoExtraCalcado: true,
       pagamentoEstado: true,
       metodoPagamento: true,
+      roupa: {
+        select: {
+          id: true,
+          ano: true,
+          tema: true,
+          precoAluguer: true,
+        },
+      },
     },
   });
   if (!reservaAtual) {
@@ -138,6 +154,23 @@ export async function PATCH(
         : {}
       : { pagamentoEstado: "POR_PAGAR", metodoPagamento: null as string | null };
 
+  const calcadoData: { incluiCalcado: boolean; custoExtraCalcado: number } | {} =
+    hasIncluiCalcadoInBody
+      ? (() => {
+          const incluir = Boolean(body.incluiCalcado);
+          if (!incluir) {
+            return { incluiCalcado: false, custoExtraCalcado: 0 };
+          }
+          if (!temCalcadoDisponivel(reservaAtual.roupa.ano)) {
+            return { incluiCalcado: false, custoExtraCalcado: 0 };
+          }
+          return {
+            incluiCalcado: true,
+            custoExtraCalcado: getPrecoCalcadoPorAno(reservaAtual.roupa.ano) ?? 0,
+          };
+        })()
+      : {};
+
   const updated = await prisma.reserva.update({
     where: { id },
     data: {
@@ -148,6 +181,7 @@ export async function PATCH(
       email,
       telefone,
       observacoes,
+      ...calcadoData,
       ...paymentData,
     },
     select: {
@@ -159,6 +193,8 @@ export async function PATCH(
       email: true,
       telefone: true,
       observacoes: true,
+      incluiCalcado: true,
+      custoExtraCalcado: true,
       pagamentoEstado: true,
       metodoPagamento: true,
       user: { select: { id: true, name: true, email: true } },
@@ -210,6 +246,12 @@ export async function PATCH(
   pushIfChanged("email", prev.email ?? null, next.email ?? null);
   pushIfChanged("telefone", prev.telefone ?? null, next.telefone ?? null);
   pushIfChanged("observacoes", prev.observacoes ?? null, next.observacoes ?? null);
+  pushIfChanged("incluiCalcado", prev.incluiCalcado ?? false, next.incluiCalcado ?? false);
+  pushIfChanged(
+    "custoExtraCalcado",
+    prev.custoExtraCalcado ?? 0,
+    next.custoExtraCalcado ?? 0
+  );
   pushIfChanged("pagamentoEstado", prev.pagamentoEstado ?? "POR_PAGAR", next.pagamentoEstado ?? "POR_PAGAR");
   pushIfChanged("metodoPagamento", prev.metodoPagamento ?? null, next.metodoPagamento ?? null);
 

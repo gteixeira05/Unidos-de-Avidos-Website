@@ -7,6 +7,7 @@ import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
 import { PrecoAluguerRoupa, StockFardasDetalhe } from "@/components/AluguerRoupasInfoPublic";
+import { temCalcadoDisponivel } from "@/lib/aluguerRoupasPublic";
 
 export const revalidate = 120;
 
@@ -66,6 +67,11 @@ export default async function RoupaDetalhePage({
             <span className="text-sm font-medium text-[#00923f]">
               Ano {roupa.ano}
             </span>
+            {temCalcadoDisponivel(roupa.ano) ? (
+              <p className="mt-2 inline-flex rounded-full border border-[#00923f]/20 bg-[#00923f]/10 px-2.5 py-1 text-xs font-semibold text-[#007a33]">
+                Calçado disponível
+              </p>
+            ) : null}
             <h1 className="mt-2 text-2xl font-bold text-gray-900">
               {tituloExibicao}
             </h1>
