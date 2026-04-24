@@ -9,6 +9,7 @@ import {
 } from "@/lib/gallery-images";
 import { persistGalleryCoverFromFile, unlinkPublicGalleryFile } from "@/lib/gallery-cover-upload";
 import { logAdminAction } from "@/lib/admin-audit";
+import { isCloudinaryImageUrl } from "@/lib/media/cloudinary";
 
 export async function GET(req: NextRequest) {
   const session = await getSessionFromRequest(req);
@@ -129,7 +130,19 @@ export async function PATCH(req: NextRequest) {
     }
     const newUrl = result.coverImageUrl;
 
-    if (year.coverImageUrl && year.coverImageUrl !== newUrl && isDedicatedCoverFilename(year.coverImageUrl)) {
+    const shouldKeepOldCloudinaryCoverAsset =
+      !!year.coverImageUrl &&
+      isCloudinaryImageUrl(year.coverImageUrl) &&
+      isDedicatedCoverFilename(year.coverImageUrl) &&
+      isCloudinaryImageUrl(newUrl) &&
+      isDedicatedCoverFilename(newUrl);
+
+    if (
+      year.coverImageUrl &&
+      year.coverImageUrl !== newUrl &&
+      isDedicatedCoverFilename(year.coverImageUrl) &&
+      !shouldKeepOldCloudinaryCoverAsset
+    ) {
       await unlinkPublicGalleryFile(year.coverImageUrl);
     }
 
