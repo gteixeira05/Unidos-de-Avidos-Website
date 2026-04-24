@@ -68,7 +68,7 @@ export default async function RoupaDetalhePage({
               Ano {roupa.ano}
             </span>
             {temCalcadoDisponivel(roupa.ano) ? (
-              <p className="mt-3 inline-flex rounded-full border border-[#00923f]/20 bg-[#00923f]/10 px-2.5 py-1 text-xs font-semibold text-[#007a33]">
+              <p className="mt-3 flex w-fit rounded-full border border-[#00923f]/20 bg-[#00923f]/10 px-2.5 py-1 text-xs font-semibold text-[#007a33]">
                 Calçado disponível
               </p>
             ) : null}

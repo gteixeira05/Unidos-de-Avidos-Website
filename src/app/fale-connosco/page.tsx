@@ -9,7 +9,7 @@ const TELEFONE_1_LIMPO = "351914884537";
 const TELEFONE_2 = "914 838 942";
 const TELEFONE_2_LIMPO = "351914838942";
 const EMAIL = "unidosdeavidos@gmail.com";
-const WHATSAPP_URL = `https://wa.me/${TELEFONE_2_LIMPO}`;
+const WHATSAPP_URL = `https://wa.me/${TELEFONE_1_LIMPO}`;
 
 export default function FaleConnoscoPage() {
   const [enviado, setEnviado] = useState(false);
