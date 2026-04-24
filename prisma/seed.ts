@@ -40,7 +40,7 @@ async function main() {
     quantidadeHomem: ano < 2015 ? 10 : 16,
     quantidadeMulher: ano < 2015 ? 12 : 18,
     conjuntoInclui:
-      "Camisa/blusa, calças/saia, faixa/cinto, e acessórios (conforme o tema do ano).",
+      "Camisa/blusa, calças/saia, acessórios (conforme o tema do ano), arcos (se disponíveis) e calçado, sendo que este último é alugado à parte pelo valor estipulado.",
     regrasLavagem:
       "Devolver limpo e em bom estado. Não usar lixívia. Em caso de dúvida, contactar a associação.",
     precoAluguer: ano < 2010 ? 20 : ano < 2020 ? 25 : 30,

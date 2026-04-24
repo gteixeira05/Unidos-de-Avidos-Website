@@ -75,14 +75,15 @@ export default async function RoupaDetalhePage({
               <div>
                 <h4 className="font-semibold text-gray-900">Condição de aluguer</h4>
                 <p className="text-sm text-gray-600">
-                  O preço de referência abaixo é o valor anual de aluguer, independentemente
-                  da quantidade de fardas levantadas. A reserva sujeita-se a aprovação e
-                  confirmação de stock pela equipa.
+                  O preço de referência abaixo é o valor do aluguer,
+                  independentemente da quantidade de fardas levantadas. A
+                  reserva sujeita-se a aprovação e confirmação de stock pela
+                  equipa.
                 </p>
               </div>
               {roupa.conjuntoInclui && (
                 <div>
-                  <h4 className="font-semibold text-gray-900">O conjunto inclui</h4>
+                  <h4 className="font-semibold text-gray-900">O aluguer inclui</h4>
                   <p className="text-sm text-gray-600">{roupa.conjuntoInclui}</p>
                 </div>
               )}
