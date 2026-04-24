@@ -3,16 +3,23 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { GALLERY_FILE_INPUT_ACCEPT } from "@/lib/gallery-images";
+import { withAssetVersion } from "@/lib/media/versioned-asset-url";
 
 type Props = {
   ano: string;
   hasDbYear: boolean;
   /** Capa atual (lista galeria / página do álbum). */
   coverImageUrl?: string | null;
+  coverUpdatedAt?: string | Date;
 };
 
 /** Barra no topo do álbum: capa, adicionar fotos, eliminar álbum. */
-export default function AdminGaleriaAnoControls({ ano, hasDbYear, coverImageUrl }: Props) {
+export default function AdminGaleriaAnoControls({
+  ano,
+  hasDbYear,
+  coverImageUrl,
+  coverUpdatedAt,
+}: Props) {
   const router = useRouter();
   const [error, setError] = useState("");
 
@@ -164,7 +171,7 @@ export default function AdminGaleriaAnoControls({ ano, hasDbYear, coverImageUrl 
             <div className="h-14 w-24 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={coverImageUrl}
+                src={withAssetVersion(coverImageUrl, coverUpdatedAt ?? Date.now())}
                 alt=""
                 className="h-full w-full object-cover"
               />

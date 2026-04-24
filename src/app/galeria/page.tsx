@@ -6,7 +6,7 @@ export const revalidate = 120;
 export default async function GaleriaPage() {
   const years = await prisma.galleryYear.findMany({
     orderBy: { ano: "desc" },
-    select: { id: true, ano: true, title: true, coverImageUrl: true },
+    select: { id: true, ano: true, title: true, coverImageUrl: true, updatedAt: true },
   });
 
   return (

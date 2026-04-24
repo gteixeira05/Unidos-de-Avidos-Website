@@ -18,6 +18,7 @@ export default async function GaleriaAnoPage({
       ano: true,
       title: true,
       coverImageUrl: true,
+      updatedAt: true,
       photos: {
         orderBy: [{ order: "asc" }, { createdAt: "asc" }],
         select: { id: true, imageUrl: true, caption: true },
@@ -64,6 +65,7 @@ export default async function GaleriaAnoPage({
       <GaleriaAlbumContent
         ano={ano}
         coverImageUrl={year.coverImageUrl}
+        coverUpdatedAt={year.updatedAt}
         photos={dbPhotos}
         serverIsAdmin={false}
       />

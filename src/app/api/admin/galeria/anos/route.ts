@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
     const item = await prisma.galleryYear.findUnique({
       where: { ano },
-      select: { id: true, ano: true, title: true, coverImageUrl: true, createdAt: true },
+      select: { id: true, ano: true, title: true, coverImageUrl: true, createdAt: true, updatedAt: true },
     });
     if (!item) {
       return Response.json({ error: "Álbum não encontrado." }, { status: 404 });
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
   const items = await prisma.galleryYear.findMany({
     orderBy: { ano: "desc" },
-    select: { id: true, ano: true, title: true, coverImageUrl: true, createdAt: true },
+    select: { id: true, ano: true, title: true, coverImageUrl: true, createdAt: true, updatedAt: true },
   });
 
   return Response.json({ items });

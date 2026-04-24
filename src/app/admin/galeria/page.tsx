@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { GALLERY_FILE_INPUT_ACCEPT } from "@/lib/gallery-images";
+import { withAssetVersion } from "@/lib/media/versioned-asset-url";
 
 type GalleryYear = {
   id: string;
   ano: number;
   title?: string | null;
   coverImageUrl?: string | null;
+  updatedAt?: string | Date;
 };
 
 type DeleteConfirmState =
@@ -209,7 +211,7 @@ export default function AdminGaleriaPage() {
                     <div className="mt-2 aspect-video overflow-hidden rounded-lg bg-gray-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={y.coverImageUrl}
+                        src={withAssetVersion(y.coverImageUrl, y.updatedAt ?? Date.now())}
                         alt={`Capa ${y.ano}`}
                         className="h-full w-full object-cover"
                       />

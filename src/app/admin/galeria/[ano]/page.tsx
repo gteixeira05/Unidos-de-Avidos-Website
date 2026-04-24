@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import GaleriaSetCoverButton from "@/components/admin/GaleriaSetCoverButton";
 import { GALLERY_FILE_INPUT_ACCEPT } from "@/lib/gallery-images";
+import { withAssetVersion } from "@/lib/media/versioned-asset-url";
 
 type Photo = {
   id: string;
@@ -25,6 +26,7 @@ export default function AdminGaleriaAnoPage({ params }: { params: { ano: string 
   const addInputRef = useRef<HTMLInputElement>(null);
 
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [coverUpdatedAt, setCoverUpdatedAt] = useState<string | null>(null);
   const [coverOpen, setCoverOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverSaving, setCoverSaving] = useState(false);
@@ -37,6 +39,7 @@ export default function AdminGaleriaAnoPage({ params }: { params: { ano: string 
       const data = await res.json();
       if (res.ok && data.item) {
         setCoverImageUrl((data.item.coverImageUrl as string | null) ?? null);
+        setCoverUpdatedAt((data.item.updatedAt as string | undefined) ?? null);
       }
     } catch {
       /* ignorar */
@@ -106,6 +109,7 @@ export default function AdminGaleriaAnoPage({ params }: { params: { ano: string 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao atualizar a capa.");
       setCoverImageUrl(data.item?.coverImageUrl ?? null);
+      setCoverUpdatedAt(data.item?.updatedAt ?? new Date().toISOString());
       closeCover();
     } catch (e2) {
       setCoverError(e2 instanceof Error ? e2.message : "Erro.");
@@ -194,7 +198,11 @@ export default function AdminGaleriaAnoPage({ params }: { params: { ano: string 
           {coverImageUrl ? (
             <div className="h-24 w-40 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={coverImageUrl} alt="" className="h-full w-full object-cover" />
+              <img
+                src={withAssetVersion(coverImageUrl, coverUpdatedAt ?? Date.now())}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </div>
           ) : (
             <p className="text-sm text-gray-600">Ainda sem capa definida.</p>

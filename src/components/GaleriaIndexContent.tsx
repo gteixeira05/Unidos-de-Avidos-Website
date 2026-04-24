@@ -6,12 +6,14 @@ import AdminGaleriaControls, {
   AdminGaleriaYearCardShell,
 } from "@/components/admin/AdminGaleriaControls";
 import { useResolvedAdmin } from "@/hooks/useResolvedAdmin";
+import { withAssetVersion } from "@/lib/media/versioned-asset-url";
 
 export type GaleriaYearRow = {
   id: string;
   ano: number;
   title: string | null;
   coverImageUrl: string | null;
+  updatedAt: string | Date;
 };
 
 export default function GaleriaIndexContent({
@@ -39,7 +41,9 @@ export default function GaleriaIndexContent({
       ) : (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {years.map((y, index) => {
-            const cover = y.coverImageUrl || "/hero-1.png";
+            const cover = y.coverImageUrl
+              ? withAssetVersion(y.coverImageUrl, y.updatedAt)
+              : "/hero-1.png";
             const coverSizes =
               "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw";
 

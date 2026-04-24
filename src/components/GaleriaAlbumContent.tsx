@@ -11,11 +11,13 @@ export type { GaleriaAlbumPhoto };
 export default function GaleriaAlbumContent({
   ano,
   coverImageUrl,
+  coverUpdatedAt,
   photos,
   serverIsAdmin,
 }: {
   ano: string;
   coverImageUrl: string | null;
+  coverUpdatedAt: string | Date;
   photos: GaleriaAlbumPhoto[];
   serverIsAdmin: boolean;
 }) {
@@ -28,6 +30,7 @@ export default function GaleriaAlbumContent({
           ano={ano}
           hasDbYear
           coverImageUrl={coverImageUrl}
+          coverUpdatedAt={coverUpdatedAt}
         />
       ) : null}
 
