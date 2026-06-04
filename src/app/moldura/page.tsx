@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, ImageIcon, Upload, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, ImageIcon, Move, Upload, ZoomIn, ZoomOut } from "lucide-react";
 
 const CANVAS_SIZE = 1080;
-const MOLDURA_ORIG = 1254;
-const CLIP_CX = (625 / MOLDURA_ORIG) * CANVAS_SIZE;
-const CLIP_CY = (609 / MOLDURA_ORIG) * CANVAS_SIZE;
-const CLIP_R  = (568 / MOLDURA_ORIG) * CANVAS_SIZE;
+const MOLDURA_ORIG = 1024;
+const CLIP_CX = (512 / MOLDURA_ORIG) * CANVAS_SIZE;
+const CLIP_CY = (511 / MOLDURA_ORIG) * CANVAS_SIZE;
+const CLIP_R  = (462 / MOLDURA_ORIG) * CANVAS_SIZE;
 
 export default function MolduraPage() {
   const [photoLoaded, setPhotoLoaded] = useState(false);
@@ -15,22 +15,36 @@ export default function MolduraPage() {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
-  const canvasRef      = useRef<HTMLCanvasElement>(null);
-  const photoImgRef    = useRef<HTMLImageElement | null>(null);
-  const frameImgRef    = useRef<HTMLImageElement | null>(null);
-  const frameReadyRef  = useRef(false);
-  const dragOriginRef  = useRef({ mx: 0, my: 0, ox: 0, oy: 0 });
-  const fileInputRef   = useRef<HTMLInputElement>(null);
+  const canvasRef     = useRef<HTMLCanvasElement>(null);
+  const photoImgRef   = useRef<HTMLImageElement | null>(null);
+  const frameImgRef   = useRef<HTMLImageElement | null>(null);
+  const dragOriginRef = useRef({ mx: 0, my: 0, ox: 0, oy: 0 });
+  const fileInputRef  = useRef<HTMLInputElement>(null);
+  const hintTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Carrega a moldura uma vez
   useEffect(() => {
     const img = new Image();
-    img.onload = () => { frameImgRef.current = img; frameReadyRef.current = true; };
-    img.src = "/moldura2_2026.png";
+    img.onload = () => { frameImgRef.current = img; };
+    img.src = "/moldura3_2026.PNG";
   }, []);
 
-  // Re-renderiza sempre que offset, scale ou photoLoaded mudam
+  // Garante que a foto nunca deixa zonas vazias dentro do círculo
+  const clampOffset = useCallback((ox: number, oy: number, s: number) => {
+    if (!photoImgRef.current) return { x: ox, y: oy };
+    const { naturalWidth: iw, naturalHeight: ih } = photoImgRef.current;
+    const base  = Math.max(CANVAS_SIZE / iw, CANVAS_SIZE / ih);
+    const drawW = iw * base * s;
+    const drawH = ih * base * s;
+    const maxX  = Math.max(0, drawW / 2 - CLIP_R);
+    const maxY  = Math.max(0, drawH / 2 - CLIP_R);
+    return {
+      x: Math.max(-maxX, Math.min(maxX, ox)),
+      y: Math.max(-maxY, Math.min(maxY, oy)),
+    };
+  }, []);
+
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     const photo  = photoImgRef.current;
@@ -41,9 +55,9 @@ export default function MolduraPage() {
 
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    const baseScale = Math.max(CANVAS_SIZE / photo.naturalWidth, CANVAS_SIZE / photo.naturalHeight);
-    const drawW = photo.naturalWidth  * baseScale * scale;
-    const drawH = photo.naturalHeight * baseScale * scale;
+    const base  = Math.max(CANVAS_SIZE / photo.naturalWidth, CANVAS_SIZE / photo.naturalHeight);
+    const drawW = photo.naturalWidth  * base * scale;
+    const drawH = photo.naturalHeight * base * scale;
     const drawX = CLIP_CX + offset.x - drawW / 2;
     const drawY = CLIP_CY + offset.y - drawH / 2;
 
@@ -61,7 +75,11 @@ export default function MolduraPage() {
     if (photoLoaded) render();
   }, [photoLoaded, render]);
 
-  // Converte coordenadas do ecrã para coordenadas do canvas
+  const handleScaleChange = (newScale: number) => {
+    setScale(newScale);
+    setOffset((prev) => clampOffset(prev.x, prev.y, newScale));
+  };
+
   const toCanvasCoords = (clientX: number, clientY: number) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     return {
@@ -70,43 +88,27 @@ export default function MolduraPage() {
     };
   };
 
-  // --- Drag (rato) ---
-  const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!photoLoaded) return;
-    const { x, y } = toCanvasCoords(e.clientX, e.clientY);
+  const dismissHint = () => {
+    setShowHint(false);
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+  };
+
+  const startDrag = (clientX: number, clientY: number) => {
+    dismissHint();
+    const { x, y } = toCanvasCoords(clientX, clientY);
     dragOriginRef.current = { mx: x, my: y, ox: offset.x, oy: offset.y };
     setIsDragging(true);
   };
 
-  const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const moveDrag = (clientX: number, clientY: number) => {
     if (!isDragging) return;
-    const { x, y } = toCanvasCoords(e.clientX, e.clientY);
+    const { x, y } = toCanvasCoords(clientX, clientY);
     const { mx, my, ox, oy } = dragOriginRef.current;
-    setOffset({ x: ox + (x - mx), y: oy + (y - my) });
+    setOffset(clampOffset(ox + (x - mx), oy + (y - my), scale));
   };
 
-  const onMouseUp = () => setIsDragging(false);
+  const endDrag = () => setIsDragging(false);
 
-  // --- Drag (toque) ---
-  const onTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!photoLoaded || e.touches.length !== 1) return;
-    const t = e.touches[0];
-    const { x, y } = toCanvasCoords(t.clientX, t.clientY);
-    dragOriginRef.current = { mx: x, my: y, ox: offset.x, oy: offset.y };
-    setIsDragging(true);
-  };
-
-  const onTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    const t = e.touches[0];
-    const { x, y } = toCanvasCoords(t.clientX, t.clientY);
-    const { mx, my, ox, oy } = dragOriginRef.current;
-    setOffset({ x: ox + (x - mx), y: oy + (y - my) });
-  };
-
-  const onTouchEnd = () => setIsDragging(false);
-
-  // --- Carregar foto ---
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
@@ -117,13 +119,14 @@ export default function MolduraPage() {
         setOffset({ x: 0, y: 0 });
         setScale(1);
         setPhotoLoaded(true);
+        setShowHint(true);
+        hintTimerRef.current = setTimeout(() => setShowHint(false), 3500);
       };
       img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
 
-  // --- Download ---
   const handleDownload = () => {
     const canvas = canvasRef.current;
     if (!canvas || !photoLoaded) return;
@@ -139,6 +142,7 @@ export default function MolduraPage() {
   };
 
   const reset = () => {
+    dismissHint();
     setPhotoLoaded(false);
     photoImgRef.current = null;
     setOffset({ x: 0, y: 0 });
@@ -159,8 +163,7 @@ export default function MolduraPage() {
         como foto de perfil nas redes sociais!
       </p>
 
-      {/* Zona de upload */}
-      {!photoLoaded && (
+      {!photoLoaded ? (
         <div
           role="button"
           tabIndex={0}
@@ -195,30 +198,60 @@ export default function MolduraPage() {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
           />
         </div>
-      )}
-
-      {/* Editor interativo */}
-      {photoLoaded && (
+      ) : (
         <div className="mt-10 space-y-4">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
+
+          {/* Canvas com overlay de instrução */}
+          <div className="relative overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
             <canvas
               ref={canvasRef}
               width={CANVAS_SIZE}
               height={CANVAS_SIZE}
               className={`w-full touch-none select-none ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
-              onMouseDown={onMouseDown}
-              onMouseMove={onMouseMove}
-              onMouseUp={onMouseUp}
-              onMouseLeave={onMouseUp}
-              onTouchStart={onTouchStart}
-              onTouchMove={onTouchMove}
-              onTouchEnd={onTouchEnd}
+              onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
+              onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
+              onMouseUp={endDrag}
+              onMouseLeave={endDrag}
+              onTouchStart={(e) => { if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY); }}
+              onTouchMove={(e) => { if (e.touches.length === 1) moveDrag(e.touches[0].clientX, e.touches[0].clientY); }}
+              onTouchEnd={endDrag}
             />
+
+            {/* Overlay com dicas — aparece 3.5s ao carregar a foto */}
+            <div
+              className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-500"
+              style={{ opacity: showHint ? 1 : 0 }}
+            >
+              <div className="flex flex-col items-center gap-3 rounded-2xl bg-white/95 px-7 py-6 shadow-xl">
+                <div className="flex items-center gap-2 text-gray-800">
+                  <Move size={22} className="text-[#00923f]" />
+                  <span className="text-sm font-semibold">Arraste para posicionar a foto</span>
+                </div>
+                <div className="h-px w-full bg-gray-200" />
+                <div className="flex items-center gap-2 text-gray-800">
+                  <ZoomOut size={16} className="text-gray-500" />
+                  <div className="relative h-2 w-24 overflow-hidden rounded-full bg-gray-200">
+                    <div className="absolute left-0 top-0 h-full w-10 rounded-full bg-[#00923f]" />
+                  </div>
+                  <ZoomIn size={16} className="text-gray-500" />
+                  <span className="text-sm font-semibold">Slider para zoom</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <p className="text-center text-sm text-gray-500">
-            Arraste a foto para a posicionar · use o slider para dar zoom
-          </p>
+          {/* Barra de dicas permanente */}
+          <div className="flex items-center justify-center gap-5 rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5 text-xs font-medium text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <Move size={13} className="text-[#00923f]" />
+              Arraste para mover
+            </span>
+            <span className="text-gray-300">·</span>
+            <span className="flex items-center gap-1.5">
+              <ZoomIn size={13} className="text-[#00923f]" />
+              Slider para zoom
+            </span>
+          </div>
 
           {/* Slider de zoom */}
           <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
@@ -229,7 +262,7 @@ export default function MolduraPage() {
               max="3"
               step="0.01"
               value={scale}
-              onChange={(e) => setScale(Number(e.target.value))}
+              onChange={(e) => handleScaleChange(Number(e.target.value))}
               className="flex-1 accent-[#00923f]"
             />
             <ZoomIn size={18} className="shrink-0 text-gray-500" />
