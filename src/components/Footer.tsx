@@ -88,6 +88,9 @@ export default function Footer() {
               <Link href="/fale-connosco" className="hover:text-[#00923f]">
                 Fale Connosco
               </Link>
+              <Link href="/moldura" className="hover:text-[#00923f]">
+                Moldura 2026
+              </Link>
             </nav>
           </div>
 
