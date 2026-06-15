@@ -46,55 +46,64 @@ export async function POST(req: NextRequest) {
   if (!session) return Response.json({ error: "Não autenticado." }, { status: 401 });
   if (session.role !== "ADMIN") return Response.json({ error: "Sem permissões." }, { status: 403 });
 
-  const contentType = req.headers.get("content-type") ?? "";
-  let ano: number;
-  let coverImageUrl: string | null = null;
+  try {
+    const contentType = req.headers.get("content-type") ?? "";
+    let ano: number;
+    let coverImageUrl: string | null = null;
 
-  if (contentType.includes("multipart/form-data")) {
-    const formData = await req.formData();
-    const anoVal = formData.get("ano");
-    ano = Number(anoVal);
-    if (!Number.isFinite(ano)) {
-      return Response.json({ error: "Ano inválido." }, { status: 400 });
-    }
-    const cover = formData.get("cover") as File | null;
-    if (cover && cover.size > 0) {
-      const result = await persistGalleryCoverFromFile(ano, cover);
-      if ("error" in result) {
-        return Response.json({ error: result.error }, { status: result.status });
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const anoVal = formData.get("ano");
+      ano = Number(anoVal);
+      if (!Number.isFinite(ano)) {
+        return Response.json({ error: "Ano inválido." }, { status: 400 });
       }
-      coverImageUrl = result.coverImageUrl;
+      const cover = formData.get("cover") as File | null;
+      if (cover && cover.size > 0) {
+        const result = await persistGalleryCoverFromFile(ano, cover);
+        if ("error" in result) {
+          return Response.json({ error: result.error }, { status: result.status });
+        }
+        coverImageUrl = result.coverImageUrl;
+      }
+    } else {
+      const body = await req.json().catch(() => ({}));
+      ano = Number(body?.ano);
+      if (!Number.isFinite(ano)) {
+        return Response.json({ error: "Ano inválido." }, { status: 400 });
+      }
+      coverImageUrl = (body?.coverImageUrl ?? "").toString().trim() || null;
+      if (coverImageUrl && !isAllowedGalleryImageUrlPath(coverImageUrl)) {
+        return Response.json({ error: GALLERY_IMAGE_FORMAT_ERROR }, { status: 400 });
+      }
     }
-  } else {
-    const body = await req.json().catch(() => ({}));
-    ano = Number(body?.ano);
-    if (!Number.isFinite(ano)) {
-      return Response.json({ error: "Ano inválido." }, { status: 400 });
+
+    const item = await prisma.galleryYear.create({
+      data: {
+        ano,
+        title: null,
+        coverImageUrl,
+      },
+      select: { id: true, ano: true, title: true, coverImageUrl: true },
+    });
+
+    await logAdminAction(session, {
+      action: "GALERIA_ANO_CREATE",
+      entityType: "GALERIA_ANO",
+      entityId: String(item.ano),
+      description: `Criou álbum da galeria para ${item.ano}.`,
+      metadata: { ano: item.ano, coverImageUrl: item.coverImageUrl ?? null },
+    });
+
+    return Response.json({ success: true, item }, { status: 201 });
+  } catch (err) {
+    console.error("[POST /api/admin/galeria/anos]", err);
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("E11000")) {
+      return Response.json({ error: "Já existe um álbum para esse ano." }, { status: 409 });
     }
-    coverImageUrl = (body?.coverImageUrl ?? "").toString().trim() || null;
-    if (coverImageUrl && !isAllowedGalleryImageUrlPath(coverImageUrl)) {
-      return Response.json({ error: GALLERY_IMAGE_FORMAT_ERROR }, { status: 400 });
-    }
+    return Response.json({ error: "Ocorreu um erro inesperado. Tente novamente." }, { status: 500 });
   }
-
-  const item = await prisma.galleryYear.create({
-    data: {
-      ano,
-      title: null,
-      coverImageUrl,
-    },
-    select: { id: true, ano: true, title: true, coverImageUrl: true },
-  });
-
-  await logAdminAction(session, {
-    action: "GALERIA_ANO_CREATE",
-    entityType: "GALERIA_ANO",
-    entityId: String(item.ano),
-    description: `Criou álbum da galeria para ${item.ano}.`,
-    metadata: { ano: item.ano, coverImageUrl: item.coverImageUrl ?? null },
-  });
-
-  return Response.json({ success: true, item }, { status: 201 });
 }
 
 /** Atualiza a foto de capa: multipart com `ano` + `cover`, ou JSON com `ano` + `coverImageUrl` (foto já no álbum). */

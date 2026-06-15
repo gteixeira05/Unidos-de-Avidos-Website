@@ -53,8 +53,13 @@ export async function persistGalleryCoverFromFile(
     return { error: errorMessageForImageProcessing(err), status: 400 };
   }
 
-  const stored = await storeProcessedWebImage(outBuf, outExt, { kind: "gallery-cover", ano });
-  return { coverImageUrl: stored.url };
+  try {
+    const stored = await storeProcessedWebImage(outBuf, outExt, { kind: "gallery-cover", ano });
+    return { coverImageUrl: stored.url };
+  } catch (err) {
+    console.error("[persistGalleryCoverFromFile] store error:", err);
+    return { error: "Não foi possível guardar a imagem. Tente novamente.", status: 500 };
+  }
 }
 
 /** Remove ficheiro local ou asset Cloudinary a partir de uma URL guardada na BD. */
