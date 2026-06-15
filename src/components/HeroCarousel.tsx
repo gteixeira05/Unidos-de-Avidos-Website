@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-const IMAGENS = ["/hero-5.JPG", "/hero-1.png", "/hero-2.png", "/hero-3.png", "/hero-4.png"];
+const IMAGENS = [
+  { src: "/hero-5.JPG", position: "object-top" },
+  { src: "/hero-1.png", position: "object-center" },
+  { src: "/hero-2.png", position: "object-center" },
+  { src: "/hero-3.png", position: "object-center" },
+  { src: "/hero-4.png", position: "object-center" },
+];
 
 export default function HeroCarousel() {
   const [indiceAtual, setIndiceAtual] = useState(0);
@@ -19,21 +25,21 @@ export default function HeroCarousel() {
   return (
     <section className="relative -mt-24 h-[60vh] min-h-[420px] overflow-hidden pt-24">
       {/* Slides */}
-      {IMAGENS.map((src, index) => (
+      {IMAGENS.map((img, index) => (
         <div
-          key={src}
+          key={img.src}
           className={`absolute inset-0 transition-opacity duration-700 ${
             index === indiceAtual ? "opacity-100" : "opacity-0"
           }`}
         >
           <Image
-            src={src}
+            src={img.src}
             alt="Marchas Antoninas - Unidos de Avidos"
             fill
             sizes="100vw"
             quality={90}
             priority={index === 0}
-            className="object-cover object-center"
+            className={`object-cover ${img.position}`}
           />
           {/* Overlay escuro para melhorar a leitura do texto */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
@@ -49,7 +55,7 @@ export default function HeroCarousel() {
 
       {/* Indicadores */}
       <div className="pointer-events-none absolute bottom-4 left-0 right-0 z-10 flex justify-center gap-2">
-        {IMAGENS.map((_, index) => (
+        {IMAGENS.map((_img, index) => (
           <span
             key={index}
             className={`h-2 w-2 rounded-full transition-colors ${
