@@ -81,7 +81,10 @@ export default function AluguerCatalogContent({
                 </span>
                 <span className="text-xs text-gray-500">Preço do aluguer</span>
               </div>
-              <StockEstimativasCatalogo />
+              <StockEstimativasCatalogo
+                quantidadeHomem={roupa.quantidadeHomem}
+                quantidadeMulher={roupa.quantidadeMulher}
+              />
               <BlocoStockCriancasArcos ano={roupa.ano} variant="catalog" />
             </div>
           </Link>

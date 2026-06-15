@@ -56,46 +56,7 @@ export default function Home() {
     <div>
       <HeroCarousel />
 
-      {/* 0. Moldura 2026 — call to action */}
-      <section className="border-b border-[#00923f]/10 bg-gradient-to-br from-[#00923f]/5 via-white to-[#00923f]/5 py-12 sm:py-14">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-center sm:gap-12">
 
-            {/* Moldura decorativa */}
-            <div className="relative shrink-0">
-              <div className="absolute inset-0 scale-110 rounded-full bg-[#00923f]/10 blur-2xl" />
-              <Image
-                src="/moldura3_2026.PNG"
-                alt="Moldura Marcha Unidos de Avidos 2026"
-                width={160}
-                height={160}
-                className="relative drop-shadow-xl"
-              />
-            </div>
-
-            {/* Texto */}
-            <div className="text-center sm:text-left">
-              <p className="text-sm font-semibold uppercase tracking-wide text-[#00923f]">
-                Marcha 2026
-              </p>
-              <h2 className="mt-2 text-2xl font-bold uppercase leading-tight text-gray-900 sm:text-3xl">
-                Mostre o seu apoio!
-              </h2>
-              <p className="mt-3 max-w-md text-base leading-relaxed text-gray-600">
-                Coloque a moldura oficial da Marcha dos Unidos de Avidos 2026 na sua foto
-                de perfil e inspire quem o rodeia a juntar-se a nós.
-              </p>
-              <Link
-                href="/moldura"
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#00923f] px-7 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition hover:bg-[#007a33]"
-              >
-                Criar a minha moldura
-                <span aria-hidden>→</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 1. Quem Somos */}
       <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">

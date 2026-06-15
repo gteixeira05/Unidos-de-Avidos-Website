@@ -38,7 +38,6 @@ const navItems = [
   { href: "/aluguer-roupas", label: "Aluguer de Roupas" },
   { href: "/socio", label: "Sócio" },
   { href: "/fale-connosco", label: "Fale Connosco" },
-  { href: "/moldura", label: "Moldura 2026" },
 ];
 
 function UnreadBadge({ count, ringClass }: { count: number; ringClass: string }) {

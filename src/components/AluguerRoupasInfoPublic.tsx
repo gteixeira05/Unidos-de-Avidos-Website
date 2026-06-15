@@ -1,7 +1,5 @@
 import Link from "next/link";
 import {
-  ESTIMATIVA_QUANTIDADE_HOMEM,
-  ESTIMATIVA_QUANTIDADE_MULHER,
   formatPrecoAluguerPublico,
   QUANTIDADE_ARCOS_POR_ANO,
   temArcosParaAlugar,
@@ -24,7 +22,13 @@ export function PrecoAluguerRoupa({
 }
 
 /** Grelha compacta Homem / Mulher com estimativas (catálogo). */
-export function StockEstimativasCatalogo() {
+export function StockEstimativasCatalogo({
+  quantidadeHomem,
+  quantidadeMulher,
+}: {
+  quantidadeHomem: number;
+  quantidadeMulher: number;
+}) {
   return (
     <div className="mt-3 flex gap-2 border-t border-gray-100 pt-3">
       <div className="flex min-w-0 flex-1 items-center justify-between rounded-md border border-gray-200/90 bg-gray-50/90 px-2.5 py-1.5">
@@ -32,7 +36,7 @@ export function StockEstimativasCatalogo() {
           Homem
         </span>
         <span className="text-sm font-semibold tabular-nums text-gray-900">
-          ~{ESTIMATIVA_QUANTIDADE_HOMEM}
+          ~{quantidadeHomem}
         </span>
       </div>
       <div className="flex min-w-0 flex-1 items-center justify-between rounded-md border border-gray-200/90 bg-gray-50/90 px-2.5 py-1.5">
@@ -40,7 +44,7 @@ export function StockEstimativasCatalogo() {
           Mulher
         </span>
         <span className="text-sm font-semibold tabular-nums text-gray-900">
-          ~{ESTIMATIVA_QUANTIDADE_MULHER}
+          ~{quantidadeMulher}
         </span>
       </div>
     </div>
@@ -98,7 +102,15 @@ export function BlocoStockCriancasArcos({
 }
 
 /** Secção completa de stock na página de detalhe. */
-export function StockFardasDetalhe({ ano }: { ano: number }) {
+export function StockFardasDetalhe({
+  ano,
+  quantidadeHomem,
+  quantidadeMulher,
+}: {
+  ano: number;
+  quantidadeHomem: number;
+  quantidadeMulher: number;
+}) {
   return (
     <div>
       <h4 className="font-semibold text-gray-900">Stock de fardas</h4>
@@ -117,13 +129,13 @@ export function StockFardasDetalhe({ ano }: { ano: number }) {
         <div className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
           <span className="text-sm text-gray-600">Homem</span>
           <span className="text-lg font-semibold tabular-nums text-gray-900">
-            ~{ESTIMATIVA_QUANTIDADE_HOMEM}
+            ~{quantidadeHomem}
           </span>
         </div>
         <div className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
           <span className="text-sm text-gray-600">Mulher</span>
           <span className="text-lg font-semibold tabular-nums text-gray-900">
-            ~{ESTIMATIVA_QUANTIDADE_MULHER}
+            ~{quantidadeMulher}
           </span>
         </div>
       </div>

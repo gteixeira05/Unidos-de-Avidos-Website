@@ -17,6 +17,25 @@ export type MarchaAnoInfo = {
 };
 
 export const MARCHAS_INFO: Record<number, MarchaAnoInfo> = {
+  2026: {
+    tema: "Antoninas – Património Cultural Imaterial de Portugal",
+    descricaoCard: "Subtema: Do Sagrado ao Profano. 8.º lugar. Vídeo da atuação e galeria disponíveis.",
+    subtitulo: "Classificação",
+    classificacao: [
+      { pos: "1º", nome: "Associação Recreativa e Cultural Flor do Monte – Carreira", pontos: "140 pontos" },
+      { pos: "2º", nome: "GARRA, Grupo Associativo e Recreativo Ribeirão em Ação", pontos: "132 pontos" },
+      { pos: "3º", nome: "Associação do Coração – Vale São Cosme", pontos: "132 pontos" },
+      { pos: "4º", nome: "Associação Cultural e Desportiva de São Martinho de Brufe", pontos: "124 pontos" },
+      { pos: "5º", nome: "Ass. Rec. e Cultural Sentir a Terra – Gondifelos/Outiz", pontos: "109 pontos" },
+      { pos: "6º", nome: "Associação Cultural e Recreativa S. Pedro de Riba D'Ave", pontos: "106 pontos" },
+      { pos: "7º", nome: "Associação Recreativa e Cultural de Antas", pontos: "102 pontos" },
+      { pos: "8º", nome: "Associação Unidos de Avidos (\"Do Sagrado ao Profano\")", pontos: "101 pontos" },
+      { pos: "9º", nome: "LACS, Associação Cultural S. Salvador da Lagoa", pontos: "93 pontos" },
+      { pos: "10º", nome: "Grupo Recreativo Vale S. Martinho", pontos: "83 pontos" },
+    ],
+    youtubeUrl: "https://www.youtube.com/watch?v=U4WoyfQd3xE",
+  },
+
   2025: {
     tema: "Camilo Castelo Branco em Vila Nova de Famalicão",
     descricaoCard: "Edição dedicada a Camilo Castelo Branco. Classificação, vídeo e galeria disponíveis.",

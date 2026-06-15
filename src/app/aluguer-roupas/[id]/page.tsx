@@ -102,7 +102,11 @@ export default async function RoupaDetalhePage({
                 </div>
               )}
 
-              <StockFardasDetalhe ano={roupa.ano} />
+              <StockFardasDetalhe
+                ano={roupa.ano}
+                quantidadeHomem={roupa.quantidadeHomem}
+                quantidadeMulher={roupa.quantidadeMulher}
+              />
             </div>
 
             <p className="mt-6 text-xl font-bold text-[#00923f]">
