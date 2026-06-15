@@ -18,7 +18,7 @@ export type MarchaAnoInfo = {
 
 export const MARCHAS_INFO: Record<number, MarchaAnoInfo> = {
   2026: {
-    tema: "Antoninas – Património Cultural Imaterial de Portugal",
+    tema: "Antoninas – Património Cultural Imaterial de Portugal (Do Sagrado ao Profano)",
     descricaoCard: "Subtema: Do Sagrado ao Profano. 8.º lugar. Vídeo da atuação e galeria disponíveis.",
     subtitulo: "Classificação",
     classificacao: [
