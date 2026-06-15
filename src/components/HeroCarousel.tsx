@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-const IMAGENS = ["/hero-1.png", "/hero-2.png", "/hero-3.png", "/hero-4.png"];
+const IMAGENS = ["/hero-5.JPG", "/hero-1.png", "/hero-2.png", "/hero-3.png", "/hero-4.png"];
 
 export default function HeroCarousel() {
   const [indiceAtual, setIndiceAtual] = useState(0);
