@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 const IMAGENS = [
-  { src: "/hero-5.JPG", position: "object-top" },
+  { src: "/hero-5.JPG", position: "object-top lg:[object-position:50%_22%]" },
   { src: "/hero-1.png", position: "object-center" },
   { src: "/hero-2.png", position: "object-center" },
   { src: "/hero-3.png", position: "object-center" },
