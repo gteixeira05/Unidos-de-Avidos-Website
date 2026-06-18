@@ -23,7 +23,6 @@ export const PRECO_CALCADO_POR_ANO: Readonly<Record<number, number>> = {
   2019: 150,
   2024: 150,
   2025: 150,
-  2026: 150,
 };
 
 export function getPrecoCalcadoPorAno(ano: number): number | null {
