@@ -340,6 +340,14 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           continua sujeito a aprovação e confirmação de stock).
         </p>
 
+        <div className="rounded-lg border border-[#00923f]/20 bg-[#00923f]/[0.06] px-4 py-3 text-sm text-gray-700">
+          <p className="font-medium text-gray-900">Condições de pagamento</p>
+          <ul className="mt-1.5 space-y-1 text-gray-600">
+            <li><strong className="text-gray-800">Dinheiro</strong> — pago no momento do levantamento.</li>
+            <li><strong className="text-gray-800">Transferência bancária</strong> — até 2 dias antes do levantamento.</li>
+          </ul>
+        </div>
+
         <button
           type="submit"
           disabled={loading}

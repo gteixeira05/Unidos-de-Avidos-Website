@@ -113,6 +113,11 @@ export default async function RoupaDetalhePage({
               <PrecoAluguerRoupa precoAluguer={roupa.precoAluguer} />
             </p>
 
+            <div className="mt-3 space-y-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-600">
+              <p><strong className="text-gray-800">Pagamento em dinheiro</strong> — efetuado no momento do levantamento.</p>
+              <p><strong className="text-gray-800">Pagamento por transferência</strong> — até 2 dias antes do levantamento.</p>
+            </div>
+
             <a
               href={`https://wa.me/351914838942?text=${encodeURIComponent(`Quero saber mais informações acerca da roupa de ${roupa.ano}!`)}`}
               target="_blank"
