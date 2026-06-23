@@ -131,8 +131,16 @@ function pagamentoAlugadaCompleto(r: ReservaAdmin): boolean {
   return m === "DINHEIRO_FISICO" || m === "TRANSFERENCIA_BANCARIA";
 }
 
+function precoBaseReservaCard(r: ReservaAdmin): number {
+  return isPosEvento2026(r.roupa.ano, r.dataInicio) ? PRECO_BASE_POS_EVENTO_2026 : Number(r.roupa.precoAluguer);
+}
+
 function totalReservaReferencia(r: ReservaAdmin): number {
-  return Number(r.roupa.precoAluguer) + Number(r.custoExtraCalcado ?? 0);
+  return precoBaseReservaCard(r) + Number(r.custoExtraCalcado ?? 0) + Number(r.custoExtraArcos ?? 0);
+}
+
+function fmtExtra(custo: number | undefined): string {
+  return Number(custo ?? 0) > 0 ? ` (+${Number(custo ?? 0).toFixed(2)} €)` : " (incluído)";
 }
 
 function AlugadaPagamentoSoloLeitura({ reserva }: { reserva: ReservaAdmin }) {
@@ -1004,14 +1012,18 @@ function AdminPageInner() {
                   </p>
                   <p className="mt-1 text-sm text-gray-700">
                     <span className="font-medium">Valor base:</span>{" "}
-                    {Number(r.roupa.precoAluguer).toFixed(2)} €
+                    {precoBaseReservaCard(r).toFixed(2)} €
                   </p>
                   <p className="mt-1 text-sm text-gray-700">
                     <span className="font-medium">Calçado:</span>{" "}
-                    {r.incluiCalcado
-                      ? `Sim (+${Number(r.custoExtraCalcado ?? 0).toFixed(2)} €)`
-                      : "Não"}
+                    {r.incluiCalcado ? `Sim${fmtExtra(r.custoExtraCalcado)}` : "Não"}
                   </p>
+                  {r.roupa.ano === 2026 && (
+                    <p className="mt-1 text-sm text-gray-700">
+                      <span className="font-medium">Arcos:</span>{" "}
+                      {r.incluiArcos ? `Sim${fmtExtra(r.custoExtraArcos)}` : "Não"}
+                    </p>
+                  )}
                   <p className="mt-1 text-sm text-gray-700">
                     <span className="font-medium">Total referência:</span>{" "}
                     {totalReservaReferencia(r).toFixed(2)} €
@@ -1122,14 +1134,18 @@ function AdminPageInner() {
                         </p>
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Valor base:</span>{" "}
-                          {Number(r.roupa.precoAluguer).toFixed(2)} €
+                          {precoBaseReservaCard(r).toFixed(2)} €
                         </p>
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Calçado:</span>{" "}
-                          {r.incluiCalcado
-                            ? `Sim (+${Number(r.custoExtraCalcado ?? 0).toFixed(2)} €)`
-                            : "Não"}
+                          {r.incluiCalcado ? `Sim${fmtExtra(r.custoExtraCalcado)}` : "Não"}
                         </p>
+                        {r.roupa.ano === 2026 && (
+                          <p className="mt-1 text-sm text-gray-700">
+                            <span className="font-medium">Arcos:</span>{" "}
+                            {r.incluiArcos ? `Sim${fmtExtra(r.custoExtraArcos)}` : "Não"}
+                          </p>
+                        )}
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Total referência:</span>{" "}
                           {totalReservaReferencia(r).toFixed(2)} €
@@ -1224,14 +1240,18 @@ function AdminPageInner() {
                         </p>
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Valor base:</span>{" "}
-                          {Number(r.roupa.precoAluguer).toFixed(2)} €
+                          {precoBaseReservaCard(r).toFixed(2)} €
                         </p>
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Calçado:</span>{" "}
-                          {r.incluiCalcado
-                            ? `Sim (+${Number(r.custoExtraCalcado ?? 0).toFixed(2)} €)`
-                            : "Não"}
+                          {r.incluiCalcado ? `Sim${fmtExtra(r.custoExtraCalcado)}` : "Não"}
                         </p>
+                        {r.roupa.ano === 2026 && (
+                          <p className="mt-1 text-sm text-gray-700">
+                            <span className="font-medium">Arcos:</span>{" "}
+                            {r.incluiArcos ? `Sim${fmtExtra(r.custoExtraArcos)}` : "Não"}
+                          </p>
+                        )}
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Total referência:</span>{" "}
                           {totalReservaReferencia(r).toFixed(2)} €
