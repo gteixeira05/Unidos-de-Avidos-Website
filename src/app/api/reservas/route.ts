@@ -11,6 +11,10 @@ import {
   formatPrecoAluguerPublico,
   getPrecoCalcadoPorAno,
   temCalcadoDisponivel,
+  isPosEvento2026,
+  PRECO_BASE_POS_EVENTO_2026,
+  PRECO_CALCADO_POS_EVENTO_2026,
+  PRECO_ARCOS_POS_EVENTO_2026,
 } from "@/lib/aluguerRoupasPublic";
 
 export async function POST(request: NextRequest) {
@@ -43,6 +47,7 @@ export async function POST(request: NextRequest) {
       email,
       telefone,
       incluiCalcado,
+      incluiArcos,
     } = body;
 
     if (!roupaId || !dataInicio || !dataFim) {
@@ -70,21 +75,42 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Roupa não encontrada" }, { status: 404 });
     }
 
-    const querCalcado = Boolean(incluiCalcado);
-    const precoCalcado = getPrecoCalcadoPorAno(roupa.ano);
-    if (querCalcado && !temCalcadoDisponivel(roupa.ano)) {
-      return Response.json(
-        { error: "Para este ano não há calçado disponível para aluguer." },
-        { status: 400 }
-      );
-    }
-    const custoExtraCalcado = querCalcado ? (precoCalcado ?? 0) : 0;
-
     const inicio = new Date(dataInicio);
     const fim = new Date(dataFim);
     if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime()) || inicio > fim) {
       return Response.json({ error: "Intervalo de datas inválido." }, { status: 400 });
     }
+
+    const querCalcado = Boolean(incluiCalcado);
+    const querArcos = Boolean(incluiArcos);
+    const posEvento = isPosEvento2026(roupa.ano, dataInicio);
+
+    let custoExtraCalcado = 0;
+    if (querCalcado) {
+      if (posEvento) {
+        custoExtraCalcado = PRECO_CALCADO_POS_EVENTO_2026;
+      } else if (temCalcadoDisponivel(roupa.ano)) {
+        custoExtraCalcado = getPrecoCalcadoPorAno(roupa.ano) ?? 0;
+      } else {
+        return Response.json(
+          { error: "Para este ano não há calçado disponível para aluguer." },
+          { status: 400 }
+        );
+      }
+    }
+
+    let custoExtraArcos = 0;
+    if (querArcos) {
+      if (!posEvento) {
+        return Response.json(
+          { error: "Os arcos só estão disponíveis individualmente em reservas a partir de 1 de janeiro de 2027." },
+          { status: 400 }
+        );
+      }
+      custoExtraArcos = PRECO_ARCOS_POS_EVENTO_2026;
+    }
+
+    const precoBaseReserva = posEvento ? PRECO_BASE_POS_EVENTO_2026 : roupa.precoAluguer;
 
     const [ocupacaoCalendario, reservaSobreposta] = await Promise.all([
       prisma.disponibilidade.findFirst({
@@ -127,6 +153,8 @@ export async function POST(request: NextRequest) {
         telefone: telefoneLimpo,
         incluiCalcado: querCalcado,
         custoExtraCalcado,
+        incluiArcos: querArcos,
+        custoExtraArcos,
       },
     });
 
@@ -157,10 +185,11 @@ export async function POST(request: NextRequest) {
         const userSafeName = escapeHtml(user?.name ?? "-");
         const userSafeEmail = escapeHtml(user?.email ?? "-");
         const roupaTemaSafe = escapeHtml(String(roupa.tema));
-        const precoRef = escapeHtml(formatPrecoAluguerPublico(Number(roupa.precoAluguer)));
+        const precoRef = escapeHtml(formatPrecoAluguerPublico(precoBaseReserva));
         const precoCalcadoFmt = escapeHtml(formatPrecoAluguerPublico(Number(custoExtraCalcado)));
+        const precoArcosFmt = escapeHtml(formatPrecoAluguerPublico(Number(custoExtraArcos)));
         const totalFmt = escapeHtml(
-          formatPrecoAluguerPublico(Number(roupa.precoAluguer) + Number(custoExtraCalcado))
+          formatPrecoAluguerPublico(precoBaseReserva + Number(custoExtraCalcado) + Number(custoExtraArcos))
         );
         await sendEmail({
           to: emails,
@@ -173,6 +202,7 @@ export async function POST(request: NextRequest) {
               <p><strong>Período:</strong> ${inicio} → ${fim}</p>
               <p><strong>Preço de referência (aluguer anual):</strong> ${precoRef}</p>
               <p><strong>Calçado:</strong> ${querCalcado ? `Sim (+${precoCalcadoFmt})` : "Não"}</p>
+              <p><strong>Arcos:</strong> ${querArcos ? `Sim (+${precoArcosFmt})` : "Não"}</p>
               <p><strong>Total de referência:</strong> ${totalFmt}</p>
               <p><a href="${process.env.APP_URL ?? ""}/admin/reservas">Abrir painel de reservas</a></p>
             </div>

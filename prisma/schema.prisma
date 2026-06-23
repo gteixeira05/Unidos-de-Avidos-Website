@@ -102,6 +102,8 @@ model Reserva {
   observacoes String?
   incluiCalcado Boolean @default(false)
   custoExtraCalcado Float @default(0)
+  incluiArcos Boolean @default(false)
+  custoExtraArcos Float @default(0)
   // Pagamento (relevante sobretudo para reservas APROVADA / alugadas)
   pagamentoEstado String @default("POR_PAGAR") // POR_PAGAR | PAGO
   metodoPagamento String? // DINHEIRO_FISICO | TRANSFERENCIA_BANCARIA (quando PAGO)

@@ -9,6 +9,10 @@ import {
   formatPrecoAluguerPublico,
   getPrecoCalcadoPorAno,
   temCalcadoDisponivel,
+  isPosEvento2026,
+  PRECO_BASE_POS_EVENTO_2026,
+  PRECO_CALCADO_POS_EVENTO_2026,
+  PRECO_ARCOS_POS_EVENTO_2026,
 } from "@/lib/aluguerRoupasPublic";
 
 interface Roupa {
@@ -32,10 +36,17 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
   const [consentimentoPrivacidade, setConsentimentoPrivacidade] = useState(false);
   const [aceitaTermos, setAceitaTermos] = useState(false);
   const [incluiCalcado, setIncluiCalcado] = useState(false);
+  const [incluiArcos, setIncluiArcos] = useState(false);
 
-  const precoCalcado = getPrecoCalcadoPorAno(roupa.ano);
-  const calcadoDisponivel = temCalcadoDisponivel(roupa.ano);
-  const totalReserva = roupa.precoAluguer + (incluiCalcado && precoCalcado ? precoCalcado : 0);
+  const posEvento2026 = isPosEvento2026(roupa.ano, dataInicio);
+
+  const precoBase = posEvento2026 ? PRECO_BASE_POS_EVENTO_2026 : roupa.precoAluguer;
+  const precoCalcado = posEvento2026 ? PRECO_CALCADO_POS_EVENTO_2026 : (getPrecoCalcadoPorAno(roupa.ano) ?? 0);
+  const calcadoDisponivel = posEvento2026 || temCalcadoDisponivel(roupa.ano);
+  const totalReserva =
+    precoBase +
+    (calcadoDisponivel && incluiCalcado ? precoCalcado : 0) +
+    (posEvento2026 && incluiArcos ? PRECO_ARCOS_POS_EVENTO_2026 : 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +102,7 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           email,
           telefone,
           incluiCalcado,
+          incluiArcos,
         }),
       });
 
@@ -169,24 +181,23 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
       </h3>
       <p className="mb-4 text-sm text-gray-600">
         O pedido não confirma a reserva de imediato. A equipa validará o stock
-        e contactá-lo-á para aprovação. O preço de aluguer anual de referência
-        desta farda é{" "}
-        <strong className="text-gray-800">{formatPrecoAluguerPublico(roupa.precoAluguer)}</strong>
-        {", "}
-        referente ao ano completo, independentemente da quantidade de fardas
-        levantadas.
+        e contactá-lo-á para aprovação.
       </p>
-      {calcadoDisponivel ? (
-        <p className="mb-4 text-sm text-gray-600">
-          Pode também adicionar calçado à reserva por{" "}
-          <strong className="text-gray-800">
-            {formatPrecoAluguerPublico(precoCalcado ?? 0)}
-          </strong>
-          {" "}adicionais.
-        </p>
+      {posEvento2026 ? (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-medium">Preços para reservas a partir de 2027</p>
+          <ul className="mt-1.5 space-y-0.5 text-amber-800">
+            <li>Preço base: <strong>{formatPrecoAluguerPublico(PRECO_BASE_POS_EVENTO_2026)}</strong> (figurino + acessórios)</li>
+            <li>Calçado: <strong>+{formatPrecoAluguerPublico(PRECO_CALCADO_POS_EVENTO_2026)}</strong> (opcional)</li>
+            <li>Arcos: <strong>+{formatPrecoAluguerPublico(PRECO_ARCOS_POS_EVENTO_2026)}</strong> (opcional)</li>
+          </ul>
+        </div>
       ) : (
         <p className="mb-4 text-sm text-gray-600">
-          Para este ano não existe calçado disponível para aluguer.
+          O preço de aluguer anual de referência desta farda é{" "}
+          <strong className="text-gray-800">{formatPrecoAluguerPublico(roupa.precoAluguer)}</strong>
+          {", "}referente ao ano completo, independentemente da quantidade de fardas levantadas.
+          {!calcadoDisponivel && roupa.ano !== 2026 && " Para este ano não existe calçado disponível para aluguer."}
         </p>
       )}
 
@@ -300,13 +311,29 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
             <span className="text-sm text-gray-800">
               Adicionar calçado à reserva
               <span className="block text-xs text-gray-500">
-                Acréscimo: {formatPrecoAluguerPublico(precoCalcado ?? 0)}
+                Acréscimo: {formatPrecoAluguerPublico(precoCalcado)}
               </span>
             </span>
             <input
               type="checkbox"
               checked={incluiCalcado}
               onChange={(e) => setIncluiCalcado(e.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-[#00923f]"
+            />
+          </label>
+        ) : null}
+        {posEvento2026 ? (
+          <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+            <span className="text-sm text-gray-800">
+              Adicionar arcos à reserva
+              <span className="block text-xs text-gray-500">
+                Acréscimo: {formatPrecoAluguerPublico(PRECO_ARCOS_POS_EVENTO_2026)}
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={incluiArcos}
+              onChange={(e) => setIncluiArcos(e.target.checked)}
               className="mt-0.5 h-4 w-4 accent-[#00923f]"
             />
           </label>
@@ -332,10 +359,18 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
         />
 
         <p className="text-sm text-gray-500">
-          Preço de referência do aluguer anual: {formatPrecoAluguerPublico(roupa.precoAluguer)}
-          {calcadoDisponivel
-            ? ` + ${formatPrecoAluguerPublico(precoCalcado ?? 0)} de calçado (opcional).`
-            : "."}{" "}
+          {posEvento2026 ? (
+            <>
+              Preço base: {formatPrecoAluguerPublico(PRECO_BASE_POS_EVENTO_2026)}
+              {calcadoDisponivel && ` + calçado opcional (${formatPrecoAluguerPublico(PRECO_CALCADO_POS_EVENTO_2026)})`}
+              {` + arcos opcionais (${formatPrecoAluguerPublico(PRECO_ARCOS_POS_EVENTO_2026)}). `}
+            </>
+          ) : (
+            <>
+              Preço de referência do aluguer anual: {formatPrecoAluguerPublico(roupa.precoAluguer)}
+              {calcadoDisponivel ? ` + ${formatPrecoAluguerPublico(precoCalcado)} de calçado (opcional).` : "."}{" "}
+            </>
+          )}
           Total selecionado: <strong>{formatPrecoAluguerPublico(totalReserva)}</strong> (o pedido
           continua sujeito a aprovação e confirmação de stock).
         </p>

@@ -32,3 +32,13 @@ export function getPrecoCalcadoPorAno(ano: number): number | null {
 export function temCalcadoDisponivel(ano: number): boolean {
   return getPrecoCalcadoPorAno(ano) !== null;
 }
+
+/** Preços especiais para a roupa de 2026 em reservas com início a partir de 2027-01-01. */
+export const PRECO_BASE_POS_EVENTO_2026 = 1600;
+export const PRECO_CALCADO_POS_EVENTO_2026 = 200;
+export const PRECO_ARCOS_POS_EVENTO_2026 = 200;
+
+/** Devolve true se a reserva deve usar o modelo de preços pós-evento 2026. */
+export function isPosEvento2026(ano: number, dataInicioStr: string): boolean {
+  return ano === 2026 && dataInicioStr !== "" && dataInicioStr >= "2027-01-01";
+}
