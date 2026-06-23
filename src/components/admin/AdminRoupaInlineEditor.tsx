@@ -529,7 +529,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Ano</label>
               <input
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base"
                 value={form.ano}
                 onChange={(e) => setForm({ ...form, ano: e.target.value })}
               />
@@ -537,7 +537,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Preço (€)</label>
               <input
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base"
                 value={form.precoAluguer}
                 onChange={(e) => setForm({ ...form, precoAluguer: e.target.value })}
               />
@@ -547,7 +547,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Descrição</label>
             <textarea
-              className="min-h-[11rem] w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm sm:min-h-[9rem]"
+              className="min-h-[11rem] w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-base sm:min-h-[9rem]"
               rows={8}
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
@@ -557,7 +557,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Conjunto inclui</label>
             <textarea
-              className="min-h-[8rem] w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="min-h-[8rem] w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-base"
               rows={5}
               value={form.conjuntoInclui}
               onChange={(e) => setForm({ ...form, conjuntoInclui: e.target.value })}
@@ -567,7 +567,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Regras de lavagem/estado</label>
             <textarea
-              className="min-h-[8rem] w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="min-h-[8rem] w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-base"
               rows={5}
               value={form.regrasLavagem}
               onChange={(e) => setForm({ ...form, regrasLavagem: e.target.value })}
@@ -658,7 +658,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
             <div className="rounded-xl border border-gray-200 bg-white p-3">
               <label className="block text-sm font-medium text-gray-700">Estado a aplicar</label>
               <select
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-base"
                 value={estadoSelecionado}
                 onChange={(e) => setEstadoSelecionado(e.target.value as EstadoDisp)}
               >
@@ -678,7 +678,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
                     <label className="mb-1 block text-sm font-medium text-gray-700">Nome</label>
                     <input
                       type="text"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base"
                       value={alugNome}
                       onChange={(e) => setAlugNome(e.target.value)}
                       autoComplete="name"
@@ -690,7 +690,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
                     </label>
                     <input
                       type="email"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base"
                       value={alugEmail}
                       onChange={(e) => setAlugEmail(e.target.value)}
                       autoComplete="email"
@@ -701,7 +701,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
                     <label className="mb-1 block text-sm font-medium text-gray-700">Telefone</label>
                     <input
                       type="tel"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base"
                       value={alugTelefone}
                       onChange={(e) => setAlugTelefone(e.target.value)}
                       autoComplete="tel"
@@ -712,7 +712,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
                       Observações (opcional)
                     </label>
                     <textarea
-                      className="mt-1 w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      className="mt-1 w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-base"
                       rows={2}
                       value={alugObs}
                       onChange={(e) => setAlugObs(e.target.value)}
@@ -933,7 +933,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
                   Motivo/nota para bloquear como ALUGADA
                 </label>
                 <textarea
-                  className="mt-1 w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="mt-1 w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-base"
                   rows={3}
                   value={confirmState.nota}
                   onChange={(e) =>
