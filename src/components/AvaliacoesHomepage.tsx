@@ -291,7 +291,7 @@ export default function AvaliacoesHomepage() {
                     value={comentario}
                     onChange={(e) => setComentario(e.target.value)}
                     placeholder="Partilhe a sua experiência (opcional)"
-                    className="w-full resize-none rounded-lg border border-gray-200 p-3 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#00923f] focus:outline-none focus:ring-1 focus:ring-[#00923f]"
+                    className="w-full resize-none rounded-lg border border-gray-200 p-3 text-base text-gray-800 placeholder:text-gray-400 focus:border-[#00923f] focus:outline-none focus:ring-1 focus:ring-[#00923f]"
                   />
                   <p className="mt-1 text-right text-xs text-gray-400">
                     {comentario.length}/600
