@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
       observacoes: true,
       incluiCalcado: true,
       custoExtraCalcado: true,
+      incluiArcos: true,
+      custoExtraArcos: true,
       pagamentoEstado: true,
       metodoPagamento: true,
       arquivada: true,

@@ -306,7 +306,65 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           />
         </div>
 
-        {calcadoDisponivel ? (
+        {posEvento2026 ? (
+          <>
+            <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+              <span className="text-sm text-gray-800">
+                Adicionar calçado à reserva
+                <span className="block text-xs text-gray-500">
+                  Acréscimo: {formatPrecoAluguerPublico(PRECO_CALCADO_POS_EVENTO_2026)}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={incluiCalcado}
+                onChange={(e) => setIncluiCalcado(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[#00923f]"
+              />
+            </label>
+            <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+              <span className="text-sm text-gray-800">
+                Adicionar arcos à reserva
+                <span className="block text-xs text-gray-500">
+                  Acréscimo: {formatPrecoAluguerPublico(PRECO_ARCOS_POS_EVENTO_2026)}
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={incluiArcos}
+                onChange={(e) => setIncluiArcos(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[#00923f]"
+              />
+            </label>
+          </>
+        ) : roupa.ano === 2026 ? (
+          <>
+            <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+              <span className="text-sm text-gray-800">
+                Pretendo levar calçado
+                <span className="block text-xs text-gray-500">Incluído no preço — apenas para controlo de stock</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={incluiCalcado}
+                onChange={(e) => setIncluiCalcado(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[#00923f]"
+              />
+            </label>
+            <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
+              <span className="text-sm text-gray-800">
+                Pretendo levar arcos
+                <span className="block text-xs text-gray-500">Incluído no preço — apenas para controlo de stock</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={incluiArcos}
+                onChange={(e) => setIncluiArcos(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[#00923f]"
+              />
+            </label>
+          </>
+        ) : calcadoDisponivel ? (
           <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
             <span className="text-sm text-gray-800">
               Adicionar calçado à reserva
@@ -318,22 +376,6 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
               type="checkbox"
               checked={incluiCalcado}
               onChange={(e) => setIncluiCalcado(e.target.checked)}
-              className="mt-0.5 h-4 w-4 accent-[#00923f]"
-            />
-          </label>
-        ) : null}
-        {posEvento2026 ? (
-          <label className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3">
-            <span className="text-sm text-gray-800">
-              Adicionar arcos à reserva
-              <span className="block text-xs text-gray-500">
-                Acréscimo: {formatPrecoAluguerPublico(PRECO_ARCOS_POS_EVENTO_2026)}
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              checked={incluiArcos}
-              onChange={(e) => setIncluiArcos(e.target.checked)}
               className="mt-0.5 h-4 w-4 accent-[#00923f]"
             />
           </label>

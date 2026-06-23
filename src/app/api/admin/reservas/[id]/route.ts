@@ -11,6 +11,9 @@ import {
 import {
   getPrecoCalcadoPorAno,
   temCalcadoDisponivel,
+  isPosEvento2026,
+  PRECO_CALCADO_POS_EVENTO_2026,
+  PRECO_ARCOS_POS_EVENTO_2026,
 } from "@/lib/aluguerRoupasPublic";
 
 function toUTCDay(d: Date) {
@@ -54,6 +57,8 @@ export async function PATCH(
   const observacoes = (body?.observacoes ?? "").toString().trim() || null;
   const hasIncluiCalcadoInBody =
     body && typeof body === "object" && "incluiCalcado" in body;
+  const hasIncluiArcosInBody =
+    body && typeof body === "object" && "incluiArcos" in body;
 
   const hasPagamentoInBody =
     body && typeof body === "object" && "pagamentoEstado" in body;
@@ -109,6 +114,8 @@ export async function PATCH(
       observacoes: true,
       incluiCalcado: true,
       custoExtraCalcado: true,
+      incluiArcos: true,
+      custoExtraArcos: true,
       pagamentoEstado: true,
       metodoPagamento: true,
       roupa: {
@@ -154,20 +161,29 @@ export async function PATCH(
         : {}
       : { pagamentoEstado: "POR_PAGAR", metodoPagamento: null as string | null };
 
+  const posEvento = isPosEvento2026(reservaAtual.roupa.ano, dataInicioRaw);
+  const ano2026PreEvento = reservaAtual.roupa.ano === 2026 && !posEvento;
+
   const calcadoData: { incluiCalcado: boolean; custoExtraCalcado: number } | {} =
     hasIncluiCalcadoInBody
       ? (() => {
           const incluir = Boolean(body.incluiCalcado);
-          if (!incluir) {
-            return { incluiCalcado: false, custoExtraCalcado: 0 };
-          }
-          if (!temCalcadoDisponivel(reservaAtual.roupa.ano)) {
-            return { incluiCalcado: false, custoExtraCalcado: 0 };
-          }
-          return {
-            incluiCalcado: true,
-            custoExtraCalcado: getPrecoCalcadoPorAno(reservaAtual.roupa.ano) ?? 0,
-          };
+          if (!incluir) return { incluiCalcado: false, custoExtraCalcado: 0 };
+          if (posEvento) return { incluiCalcado: true, custoExtraCalcado: PRECO_CALCADO_POS_EVENTO_2026 };
+          if (ano2026PreEvento) return { incluiCalcado: true, custoExtraCalcado: 0 };
+          if (!temCalcadoDisponivel(reservaAtual.roupa.ano)) return { incluiCalcado: false, custoExtraCalcado: 0 };
+          return { incluiCalcado: true, custoExtraCalcado: getPrecoCalcadoPorAno(reservaAtual.roupa.ano) ?? 0 };
+        })()
+      : {};
+
+  const arcosData: { incluiArcos: boolean; custoExtraArcos: number } | {} =
+    hasIncluiArcosInBody
+      ? (() => {
+          const incluir = Boolean(body.incluiArcos);
+          if (!incluir) return { incluiArcos: false, custoExtraArcos: 0 };
+          if (posEvento) return { incluiArcos: true, custoExtraArcos: PRECO_ARCOS_POS_EVENTO_2026 };
+          if (ano2026PreEvento) return { incluiArcos: true, custoExtraArcos: 0 };
+          return { incluiArcos: false, custoExtraArcos: 0 };
         })()
       : {};
 
@@ -182,6 +198,7 @@ export async function PATCH(
       telefone,
       observacoes,
       ...calcadoData,
+      ...arcosData,
       ...paymentData,
     },
     select: {
@@ -195,6 +212,8 @@ export async function PATCH(
       observacoes: true,
       incluiCalcado: true,
       custoExtraCalcado: true,
+      incluiArcos: true,
+      custoExtraArcos: true,
       pagamentoEstado: true,
       metodoPagamento: true,
       user: { select: { id: true, name: true, email: true } },
@@ -247,11 +266,9 @@ export async function PATCH(
   pushIfChanged("telefone", prev.telefone ?? null, next.telefone ?? null);
   pushIfChanged("observacoes", prev.observacoes ?? null, next.observacoes ?? null);
   pushIfChanged("incluiCalcado", prev.incluiCalcado ?? false, next.incluiCalcado ?? false);
-  pushIfChanged(
-    "custoExtraCalcado",
-    prev.custoExtraCalcado ?? 0,
-    next.custoExtraCalcado ?? 0
-  );
+  pushIfChanged("custoExtraCalcado", prev.custoExtraCalcado ?? 0, next.custoExtraCalcado ?? 0);
+  pushIfChanged("incluiArcos", prev.incluiArcos ?? false, next.incluiArcos ?? false);
+  pushIfChanged("custoExtraArcos", prev.custoExtraArcos ?? 0, next.custoExtraArcos ?? 0);
   pushIfChanged("pagamentoEstado", prev.pagamentoEstado ?? "POR_PAGAR", next.pagamentoEstado ?? "POR_PAGAR");
   pushIfChanged("metodoPagamento", prev.metodoPagamento ?? null, next.metodoPagamento ?? null);
 

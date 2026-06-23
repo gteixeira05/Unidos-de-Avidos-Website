@@ -12,6 +12,11 @@ import {
 import {
   getPrecoCalcadoPorAno,
   temCalcadoDisponivel,
+  isPosEvento2026,
+  PRECO_BASE_POS_EVENTO_2026,
+  PRECO_CALCADO_POS_EVENTO_2026,
+  PRECO_ARCOS_POS_EVENTO_2026,
+  formatPrecoAluguerPublico,
 } from "@/lib/aluguerRoupasPublic";
 
 type AdminTab = "reservas" | "alugadas" | "arquivadas" | "avaliacoes" | "utilizadores" | "logs";
@@ -28,6 +33,8 @@ type ReservaAdmin = {
   telefone?: string | null;
   incluiCalcado?: boolean;
   custoExtraCalcado?: number;
+  incluiArcos?: boolean;
+  custoExtraArcos?: number;
   pagamentoEstado?: string | null;
   metodoPagamento?: string | null;
   arquivada?: boolean;
@@ -90,6 +97,7 @@ type EditReservaState =
         telefone: string;
         observacoes: string;
         incluiCalcado: boolean;
+        incluiArcos: boolean;
         pagamentoEstado: string;
         metodoPagamento: string;
       };
@@ -779,6 +787,7 @@ function AdminPageInner() {
         telefone: reserva.telefone ?? "",
         observacoes: reserva.observacoes ?? "",
         incluiCalcado: Boolean(reserva.incluiCalcado),
+        incluiArcos: Boolean(reserva.incluiArcos),
         pagamentoEstado: normalizePagamentoEstado(reserva.pagamentoEstado),
         metodoPagamento: reserva.metodoPagamento ?? "",
       },
@@ -1759,33 +1768,33 @@ function AdminPageInner() {
                   <option value="CANCELADA">CANCELADA</option>
                 </select>
               </label>
-              <div className="text-sm text-gray-700">
-                <span className="mb-1 block font-medium text-gray-700">Valor base</span>
-                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
-                  {Number(editReservaState.reserva.roupa.precoAluguer).toFixed(2)} €
-                </p>
-              </div>
-              <div className="text-sm text-gray-700">
-                <span className="mb-1 block font-medium text-gray-700">Calçado</span>
-                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
-                  {editReservaState.form.incluiCalcado
-                    ? `Sim (+${Number(getPrecoCalcadoPorAno(editReservaState.reserva.roupa.ano) ?? 0).toFixed(2)} €)`
-                    : "Não"}
-                </p>
-              </div>
-              <div className="text-sm text-gray-700">
-                <span className="mb-1 block font-medium text-gray-700">Total referência</span>
-                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
-                  {(
-                    Number(editReservaState.reserva.roupa.precoAluguer) +
-                    Number(
-                      editReservaState.form.incluiCalcado
-                        ? (getPrecoCalcadoPorAno(editReservaState.reserva.roupa.ano) ?? 0)
-                        : 0
-                    )
-                  ).toFixed(2)} €
-                </p>
-              </div>
+              {(() => {
+                const r = editReservaState.reserva;
+                const f = editReservaState.form;
+                const posEvt = isPosEvento2026(r.roupa.ano, f.dataInicio);
+                const preEvt2026 = r.roupa.ano === 2026 && !posEvt;
+                const precoBase = posEvt ? PRECO_BASE_POS_EVENTO_2026 : Number(r.roupa.precoAluguer);
+                const custoCalcado = posEvt ? PRECO_CALCADO_POS_EVENTO_2026 : preEvt2026 ? 0 : (getPrecoCalcadoPorAno(r.roupa.ano) ?? 0);
+                const custoArcos = posEvt ? PRECO_ARCOS_POS_EVENTO_2026 : 0;
+                const total = precoBase + (f.incluiCalcado ? custoCalcado : 0) + (f.incluiArcos ? custoArcos : 0);
+                return (
+                  <>
+                    <div className="text-sm text-gray-700">
+                      <span className="mb-1 block font-medium text-gray-700">Valor base</span>
+                      <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-base sm:text-sm">
+                        {formatPrecoAluguerPublico(precoBase)}
+                        {preEvt2026 && <span className="ml-1 text-xs text-gray-400">(fixo)</span>}
+                      </p>
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      <span className="mb-1 block font-medium text-gray-700">Total referência</span>
+                      <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-semibold text-base sm:text-sm">
+                        {formatPrecoAluguerPublico(total)}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
               <label className="min-w-0 text-sm">
                 <span className="mb-1 block font-medium text-gray-700">Data início</span>
                 <div className="flex min-w-0 overflow-hidden rounded-lg border border-gray-300 focus-within:border-[#00923f] focus-within:ring-1 focus-within:ring-[#00923f]">
@@ -1868,37 +1877,88 @@ function AdminPageInner() {
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
                 />
               </label>
-              <label className="text-sm sm:col-span-2">
-                <span className="mb-1 block font-medium text-gray-700">Calçado</span>
-                {temCalcadoDisponivel(editReservaState.reserva.roupa.ano) ? (
-                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
-                    <label className="flex items-center justify-between gap-3 text-sm text-gray-700">
-                      <span>
-                        Incluir calçado nesta reserva
-                        <span className="ml-1 text-xs text-gray-500">
-                          (+{Number(getPrecoCalcadoPorAno(editReservaState.reserva.roupa.ano) ?? 0).toFixed(2)} €)
-                        </span>
-                      </span>
-                      <input
-                        type="checkbox"
-                        checked={editReservaState.form.incluiCalcado}
-                        onChange={(e) =>
-                          setEditReservaState((prev) =>
-                            prev.open
-                              ? { ...prev, form: { ...prev.form, incluiCalcado: e.target.checked } }
-                              : prev
-                          )
-                        }
-                        className="h-4 w-4 accent-[#00923f]"
-                      />
-                    </label>
-                  </div>
-                ) : (
-                  <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                    Não disponível para este ano.
-                  </p>
-                )}
-              </label>
+              {(() => {
+                const r = editReservaState.reserva;
+                const f = editReservaState.form;
+                const posEvt = isPosEvento2026(r.roupa.ano, f.dataInicio);
+                const preEvt2026 = r.roupa.ano === 2026 && !posEvt;
+                const mostraCalcado2026 = posEvt || preEvt2026;
+                const custoCalcadoLabel = posEvt ? `+${formatPrecoAluguerPublico(PRECO_CALCADO_POS_EVENTO_2026)}` : preEvt2026 ? "incluído (2000€ fixo)" : null;
+                const custoArcosLabel = posEvt ? `+${formatPrecoAluguerPublico(PRECO_ARCOS_POS_EVENTO_2026)}` : "incluído (2000€ fixo)";
+                return (
+                  <>
+                    <div className="text-sm sm:col-span-2">
+                      <span className="mb-1 block font-medium text-gray-700">Calçado</span>
+                      {mostraCalcado2026 ? (
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                          <label className="flex items-center justify-between gap-3 text-sm text-gray-700">
+                            <span>
+                              Incluir calçado nesta reserva
+                              {custoCalcadoLabel && <span className="ml-1 text-xs text-gray-500">({custoCalcadoLabel})</span>}
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={f.incluiCalcado}
+                              onChange={(e) =>
+                                setEditReservaState((prev) =>
+                                  prev.open ? { ...prev, form: { ...prev.form, incluiCalcado: e.target.checked } } : prev
+                                )
+                              }
+                              className="h-4 w-4 accent-[#00923f]"
+                            />
+                          </label>
+                        </div>
+                      ) : temCalcadoDisponivel(r.roupa.ano) ? (
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                          <label className="flex items-center justify-between gap-3 text-sm text-gray-700">
+                            <span>
+                              Incluir calçado nesta reserva
+                              <span className="ml-1 text-xs text-gray-500">(+{Number(getPrecoCalcadoPorAno(r.roupa.ano) ?? 0).toFixed(2)} €)</span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={f.incluiCalcado}
+                              onChange={(e) =>
+                                setEditReservaState((prev) =>
+                                  prev.open ? { ...prev, form: { ...prev.form, incluiCalcado: e.target.checked } } : prev
+                                )
+                              }
+                              className="h-4 w-4 accent-[#00923f]"
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+                          Não disponível para este ano.
+                        </p>
+                      )}
+                    </div>
+                    {r.roupa.ano === 2026 && (
+                      <div className="text-sm sm:col-span-2">
+                        <span className="mb-1 block font-medium text-gray-700">Arcos</span>
+                        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                          <label className="flex items-center justify-between gap-3 text-sm text-gray-700">
+                            <span>
+                              Incluir arcos nesta reserva
+                              <span className="ml-1 text-xs text-gray-500">({custoArcosLabel})</span>
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={f.incluiArcos}
+                              onChange={(e) =>
+                                setEditReservaState((prev) =>
+                                  prev.open ? { ...prev, form: { ...prev.form, incluiArcos: e.target.checked } } : prev
+                                )
+                              }
+                              className="h-4 w-4 accent-[#00923f]"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {editReservaState.form.estado === "APROVADA" ? (
                 <>
                   <label className="text-sm">
