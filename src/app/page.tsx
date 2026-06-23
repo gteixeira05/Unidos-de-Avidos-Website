@@ -6,6 +6,7 @@ import { Calendar } from "lucide-react";
 import { useState } from "react";
 import HeroCarousel from "@/components/HeroCarousel";
 import PrivacyConsentField from "@/components/PrivacyConsentField";
+import AvaliacoesHomepage from "@/components/AvaliacoesHomepage";
 
 const eventosFuturos = [
   {
@@ -108,7 +109,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. Torne-se Sócio */}
+      {/* 3. Avaliações */}
+      <AvaliacoesHomepage />
+
+      {/* 4. Torne-se Sócio */}
       <section className="bg-gray-50 py-16">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-[#00923f]">

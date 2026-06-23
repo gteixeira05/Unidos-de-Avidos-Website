@@ -28,6 +28,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   reservas      Reserva[]
   notifications Notification[]
+  avaliacoes    Avaliacao[]
 }
 
 // Códigos de recuperação de password (expira em 15 min)
@@ -163,6 +164,19 @@ model AdminAuditLog {
   @@index([action, createdAt])
   @@index([entityType, createdAt])
   @@index([actorUserId, createdAt])
+}
+
+model Avaliacao {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nota        Int      // 1-5 estrelas
+  comentario  String?
+  aprovada    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([aprovada, createdAt])
+  @@index([userId, createdAt])
 }
 
 model AdminLoginChallenge {

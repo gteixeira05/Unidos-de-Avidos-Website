@@ -45,6 +45,14 @@ type ReservaItem = {
   roupa: { id: string; ano: number; tema: string; precoAluguer: number };
 };
 
+type AvaliacaoItem = {
+  id: string;
+  nota: number;
+  comentario?: string | null;
+  aprovada: boolean;
+  createdAt: string;
+};
+
 const NOTIF_POLL_MS = 15_000;
 
 export default function PerfilPage() {
@@ -60,6 +68,13 @@ export default function PerfilPage() {
   const [savingMarketingPrefs, setSavingMarketingPrefs] = useState(false);
   const [marketingPrefsErro, setMarketingPrefsErro] = useState("");
   const [apagarPendente, setApagarPendente] = useState<Notificacao | null>(null);
+  const [avaliacoes, setAvaliacoes] = useState<AvaliacaoItem[]>([]);
+  const [avaliacaoNota, setAvaliacaoNota] = useState(0);
+  const [avaliacaoHover, setAvaliacaoHover] = useState(0);
+  const [avaliacaoComentario, setAvaliacaoComentario] = useState("");
+  const [avaliacaoEnviada, setAvaliacaoEnviada] = useState(false);
+  const [avaliacaoErro, setAvaliacaoErro] = useState("");
+  const [avaliacaoEnviando, setAvaliacaoEnviando] = useState(false);
 
   const loadNotificacoes = useCallback(async () => {
     try {
@@ -76,6 +91,16 @@ export default function PerfilPage() {
       const r = await fetch("/api/reservas/me", { cache: "no-store", credentials: "include" });
       const d = await r.json();
       if (r.ok) setReservas((d?.items ?? []) as ReservaItem[]);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const loadAvaliacoes = useCallback(async () => {
+    try {
+      const r = await fetch("/api/avaliacoes/me", { cache: "no-store", credentials: "include" });
+      const d = await r.json();
+      if (r.ok) setAvaliacoes((d?.items ?? []) as AvaliacaoItem[]);
     } catch {
       /* ignore */
     }
@@ -114,11 +139,15 @@ export default function PerfilPage() {
       fetch("/api/reservas/me", { cache: "no-store", credentials: "include" }).then((r) =>
         r.json()
       ),
+      fetch("/api/avaliacoes/me", { cache: "no-store", credentials: "include" }).then((r) =>
+        r.json()
+      ),
     ])
-      .then(([n, r]) => {
+      .then(([n, r, av]) => {
         if (cancelled) return;
         setNotificacoes((n?.items ?? []) as Notificacao[]);
         setReservas((r?.items ?? []) as ReservaItem[]);
+        setAvaliacoes((av?.items ?? []) as AvaliacaoItem[]);
         notifyNotificationsMutated();
       })
       .catch(() => {});
@@ -129,9 +158,10 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.location.hash !== "#sec-notificacoes") return;
+    const hash = window.location.hash;
+    if (hash !== "#sec-notificacoes" && hash !== "#sec-avaliacoes") return;
     const t = window.setTimeout(() => {
-      document.getElementById("sec-notificacoes")?.scrollIntoView({
+      document.getElementById(hash.slice(1))?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -278,6 +308,33 @@ export default function PerfilPage() {
         .catch(() => {});
     } finally {
       setSavingMarketingPrefs(false);
+    }
+  }
+
+  async function submeterAvaliacao() {
+    if (avaliacaoNota < 1) {
+      setAvaliacaoErro("Escolha uma classificação de 1 a 5 estrelas.");
+      return;
+    }
+    setAvaliacaoErro("");
+    setAvaliacaoEnviando(true);
+    try {
+      const res = await fetch("/api/avaliacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ nota: avaliacaoNota, comentario: avaliacaoComentario.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error ?? "Erro ao submeter avaliação.");
+      setAvaliacaoEnviada(true);
+      setAvaliacaoNota(0);
+      setAvaliacaoComentario("");
+      await loadAvaliacoes();
+    } catch (e) {
+      setAvaliacaoErro(e instanceof Error ? e.message : "Erro ao submeter avaliação.");
+    } finally {
+      setAvaliacaoEnviando(false);
     }
   }
 
@@ -600,6 +657,127 @@ export default function PerfilPage() {
           </div>
         </div>
       ) : null}
+
+      <div
+        id="sec-avaliacoes"
+        className="scroll-mt-28 space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+      >
+        <h2 className="text-lg font-semibold text-[#00923f]">Deixar uma avaliação</h2>
+        <p className="text-sm text-gray-600">
+          Partilhe a sua experiência com o serviço de aluguer de roupas dos Unidos de Avidos.
+        </p>
+
+        {avaliacaoEnviada ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+            Avaliação submetida com sucesso! Será publicada após aprovação pela equipa.
+            <button
+              type="button"
+              className="ml-3 text-xs font-semibold underline"
+              onClick={() => setAvaliacaoEnviada(false)}
+            >
+              Deixar outra
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <p className="mb-2 text-sm font-medium text-gray-700">Classificação</p>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setAvaliacaoNota(star)}
+                    onMouseEnter={() => setAvaliacaoHover(star)}
+                    onMouseLeave={() => setAvaliacaoHover(0)}
+                    disabled={avaliacaoEnviando}
+                    aria-label={`${star} estrela${star !== 1 ? "s" : ""}`}
+                    className="transition-transform hover:scale-110 disabled:opacity-50"
+                  >
+                    <svg
+                      className={`h-8 w-8 ${
+                        star <= (avaliacaoHover || avaliacaoNota)
+                          ? "text-amber-400"
+                          : "text-gray-200"
+                      } transition-colors`}
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+              {avaliacaoNota > 0 && (
+                <p className="mt-1 text-xs text-gray-500">
+                  {["", "Mau", "Razoável", "Bom", "Muito bom", "Excelente"][avaliacaoNota]}
+                </p>
+              )}
+            </div>
+
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-gray-700">
+                Comentário <span className="font-normal text-gray-400">(opcional)</span>
+              </span>
+              <textarea
+                rows={3}
+                maxLength={600}
+                value={avaliacaoComentario}
+                onChange={(e) => setAvaliacaoComentario(e.target.value)}
+                disabled={avaliacaoEnviando}
+                placeholder="Conte-nos a sua experiência…"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#00923f] focus:outline-none focus:ring-1 focus:ring-[#00923f] disabled:opacity-50"
+              />
+              <p className="mt-0.5 text-right text-xs text-gray-400">
+                {avaliacaoComentario.length}/600
+              </p>
+            </label>
+
+            {avaliacaoErro && (
+              <p className="text-sm text-red-600">{avaliacaoErro}</p>
+            )}
+
+            <button
+              type="button"
+              onClick={() => void submeterAvaliacao()}
+              disabled={avaliacaoEnviando || avaliacaoNota === 0}
+              className="w-full rounded-lg bg-[#00923f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007a33] disabled:opacity-50"
+            >
+              {avaliacaoEnviando ? "A submeter…" : "Submeter avaliação"}
+            </button>
+          </div>
+        )}
+
+        {avaliacoes.length > 0 && (
+          <div className="border-t border-gray-100 pt-4">
+            <p className="mb-3 text-sm font-medium text-gray-700">As minhas avaliações anteriores</p>
+            <ul className="space-y-2">
+              {avaliacoes.map((av) => (
+                <li key={av.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {[1,2,3,4,5].map((s) => (
+                        <svg key={s} className={`h-3.5 w-3.5 ${s <= av.nota ? "text-amber-400" : "text-gray-200"}`} viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${av.aprovada ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                      {av.aprovada ? "Publicada" : "Aguarda aprovação"}
+                    </span>
+                    <span className="ml-auto text-xs text-gray-400">
+                      {new Date(av.createdAt).toLocaleDateString("pt-PT")}
+                    </span>
+                  </div>
+                  {av.comentario && (
+                    <p className="mt-1.5 text-xs text-gray-600">&ldquo;{av.comentario}&rdquo;</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
 
       <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-[#00923f]">As minhas reservas</h2>
