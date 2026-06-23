@@ -81,36 +81,37 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Intervalo de datas inválido." }, { status: 400 });
     }
 
-    const querCalcado = Boolean(incluiCalcado);
-    const querArcos = Boolean(incluiArcos);
     const posEvento = isPosEvento2026(roupa.ano, dataInicio);
 
+    // Pré-2027 na roupa de 2026: preço fixo de 2000€, tudo incluído, sem extras
+    // Pós-2027 na roupa de 2026: base 1600€ + calçado e arcos opcionais
+    // Outros anos: preços normais com calçado se disponível
+    let querCalcado = Boolean(incluiCalcado);
+    let querArcos = Boolean(incluiArcos);
     let custoExtraCalcado = 0;
-    if (querCalcado) {
-      if (posEvento) {
-        custoExtraCalcado = PRECO_CALCADO_POS_EVENTO_2026;
-      } else if (temCalcadoDisponivel(roupa.ano)) {
-        custoExtraCalcado = getPrecoCalcadoPorAno(roupa.ano) ?? 0;
-      } else {
-        return Response.json(
-          { error: "Para este ano não há calçado disponível para aluguer." },
-          { status: 400 }
-        );
-      }
-    }
-
     let custoExtraArcos = 0;
-    if (querArcos) {
-      if (!posEvento) {
-        return Response.json(
-          { error: "Os arcos só estão disponíveis individualmente em reservas a partir de 1 de janeiro de 2027." },
-          { status: 400 }
-        );
-      }
-      custoExtraArcos = PRECO_ARCOS_POS_EVENTO_2026;
-    }
+    let precoBaseReserva = roupa.precoAluguer;
 
-    const precoBaseReserva = posEvento ? PRECO_BASE_POS_EVENTO_2026 : roupa.precoAluguer;
+    if (posEvento) {
+      precoBaseReserva = PRECO_BASE_POS_EVENTO_2026;
+      if (querCalcado) custoExtraCalcado = PRECO_CALCADO_POS_EVENTO_2026;
+      if (querArcos) custoExtraArcos = PRECO_ARCOS_POS_EVENTO_2026;
+    } else if (roupa.ano === 2026) {
+      // Pré-2027: preço fixo 2000€, ignorar extras
+      querCalcado = false;
+      querArcos = false;
+    } else {
+      querArcos = false;
+      if (querCalcado) {
+        if (!temCalcadoDisponivel(roupa.ano)) {
+          return Response.json(
+            { error: "Para este ano não há calçado disponível para aluguer." },
+            { status: 400 }
+          );
+        }
+        custoExtraCalcado = getPrecoCalcadoPorAno(roupa.ano) ?? 0;
+      }
+    }
 
     const [ocupacaoCalendario, reservaSobreposta] = await Promise.all([
       prisma.disponibilidade.findFirst({
