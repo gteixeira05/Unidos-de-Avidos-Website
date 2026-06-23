@@ -1,6 +1,7 @@
 import { rm } from "fs/promises";
 import path from "path";
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { removeStoredMediaAsset } from "@/lib/media/remove-stored-asset";
@@ -115,6 +116,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!roupa) return Response.json({ error: "Roupa não encontrada." }, { status: 404 });
 
   await prisma.roupa.delete({ where: { id } });
+
+  revalidatePath("/aluguer-roupas");
+  revalidatePath(`/aluguer-roupas/${id}`);
 
   const urls = new Set<string>();
   if (roupa.imagemUrl) urls.add(roupa.imagemUrl);
