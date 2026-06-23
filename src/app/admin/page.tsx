@@ -14,7 +14,7 @@ import {
   temCalcadoDisponivel,
 } from "@/lib/aluguerRoupasPublic";
 
-type AdminTab = "reservas" | "alugadas" | "utilizadores" | "logs";
+type AdminTab = "reservas" | "alugadas" | "arquivadas" | "utilizadores" | "logs";
 
 // --- Reservas types & content ---
 type ReservaAdmin = {
@@ -30,6 +30,7 @@ type ReservaAdmin = {
   custoExtraCalcado?: number;
   pagamentoEstado?: string | null;
   metodoPagamento?: string | null;
+  arquivada?: boolean;
   createdAt: string;
   user?: { id: string; name: string; email: string } | null;
   roupa: { id: string; ano: number; tema: string; precoAluguer: number };
@@ -234,6 +235,7 @@ function AdminPageInner() {
     tabParam === "utilizadores" ||
     tabParam === "reservas" ||
     tabParam === "alugadas" ||
+    tabParam === "arquivadas" ||
     tabParam === "logs"
       ? tabParam
       : "reservas";
@@ -244,6 +246,7 @@ function AdminPageInner() {
       tabParam === "utilizadores" ||
       tabParam === "reservas" ||
       tabParam === "alugadas" ||
+      tabParam === "arquivadas" ||
       tabParam === "logs"
     ) {
       setTab(tabParam);
@@ -263,6 +266,10 @@ function AdminPageInner() {
   const [alugadas, setAlugadas] = useState<ReservaAdmin[]>([]);
   const [alugadasLoading, setAlugadasLoading] = useState(false);
   const [alugadasError, setAlugadasError] = useState("");
+  const [arquivadas, setArquivadas] = useState<ReservaAdmin[]>([]);
+  const [arquivadasLoading, setArquivadasLoading] = useState(false);
+  const [arquivadasError, setArquivadasError] = useState("");
+  const [arquivandoId, setArquivandoId] = useState<string | null>(null);
   const [editReservaState, setEditReservaState] = useState<EditReservaState>({ open: false });
   const [savingEditReserva, setSavingEditReserva] = useState(false);
   /** Confirmação antes de aplicar PATCH ao guardar edição da reserva */
@@ -310,6 +317,7 @@ function AdminPageInner() {
   const alugadasPorAno = useMemo(() => {
     const groups = new Map<number, ReservaAdmin[]>();
     for (const item of alugadas) {
+      if (item.arquivada) continue;
       const ano = item.roupa.ano;
       const current = groups.get(ano) ?? [];
       current.push(item);
@@ -317,6 +325,17 @@ function AdminPageInner() {
     }
     return Array.from(groups.entries()).sort((a, b) => b[0] - a[0]);
   }, [alugadas]);
+
+  const arquivadasPorAno = useMemo(() => {
+    const groups = new Map<number, ReservaAdmin[]>();
+    for (const item of arquivadas) {
+      const ano = item.roupa.ano;
+      const current = groups.get(ano) ?? [];
+      current.push(item);
+      groups.set(ano, current);
+    }
+    return Array.from(groups.entries()).sort((a, b) => b[0] - a[0]);
+  }, [arquivadas]);
 
   useEffect(() => {
     let cancelled = false;
@@ -394,6 +413,28 @@ function AdminPageInner() {
       })
       .finally(() => {
         if (!cancelled) setAlugadasLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
+
+  // Load arquivadas when tab is arquivadas
+  useEffect(() => {
+    if (tab !== "arquivadas") return;
+    let cancelled = false;
+    setArquivadasLoading(true);
+    setArquivadasError("");
+    fetch("/api/admin/reservas?arquivada=true")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setArquivadas((data.items ?? []) as ReservaAdmin[]);
+      })
+      .catch(() => {
+        if (!cancelled) setArquivadasError("Erro ao carregar reservas arquivadas.");
+      })
+      .finally(() => {
+        if (!cancelled) setArquivadasLoading(false);
       });
     return () => {
       cancelled = true;
@@ -605,6 +646,47 @@ function AdminPageInner() {
     }
   }
 
+  async function reloadArquivadas() {
+    setArquivadasLoading(true);
+    setArquivadasError("");
+    try {
+      const res = await fetch("/api/admin/reservas?arquivada=true");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro ao carregar reservas arquivadas.");
+      setArquivadas((data.items ?? []) as ReservaAdmin[]);
+    } catch (e) {
+      setArquivadasError(e instanceof Error ? e.message : "Ocorreu um erro.");
+    } finally {
+      setArquivadasLoading(false);
+    }
+  }
+
+  async function arquivarReserva(id: string, arquivar: boolean) {
+    setArquivandoId(id);
+    setAlugadasError("");
+    setArquivadasError("");
+    try {
+      const res = await fetch(`/api/admin/reservas/${id}/arquivar`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ arquivada: arquivar }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Erro ao arquivar reserva.");
+      if (arquivar) {
+        setAlugadas((prev) => prev.filter((r) => r.id !== id));
+      } else {
+        setArquivadas((prev) => prev.filter((r) => r.id !== id));
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Ocorreu um erro.";
+      setAlugadasError(msg);
+      setArquivadasError(msg);
+    } finally {
+      setArquivandoId(null);
+    }
+  }
+
   function openEditReserva(reserva: ReservaAdmin) {
     const toDateInput = (value: string) => {
       const d = new Date(value);
@@ -668,7 +750,7 @@ function AdminPageInner() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Erro ao guardar edição da reserva.");
-      await Promise.all([reloadReservas(), reloadAlugadas()]);
+      await Promise.all([reloadReservas(), reloadAlugadas(), reloadArquivadas()]);
       setEditReservaState({ open: false });
     } catch (e) {
       const message = e instanceof Error ? e.message : "Ocorreu um erro.";
@@ -738,6 +820,17 @@ function AdminPageInner() {
           }`}
         >
           Reservas Alugadas
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("arquivadas")}
+          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+            tab === "arquivadas"
+              ? "bg-[#00923f] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          Reservas Arquivadas
         </button>
         <button
           type="button"
@@ -965,6 +1058,14 @@ function AdminPageInner() {
                           </button>
                           <button
                             type="button"
+                            onClick={() => void arquivarReserva(r.id, true)}
+                            disabled={arquivandoId === r.id}
+                            className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-60"
+                          >
+                            {arquivandoId === r.id ? "A arquivar…" : "Arquivar"}
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => openDeleteAlugadaConfirm(r)}
                             disabled={deletingReservaId === r.id}
                             className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
@@ -981,6 +1082,102 @@ function AdminPageInner() {
           ) : (
             <div className="mt-6 rounded-xl border border-gray-200 bg-white p-8 text-gray-700">
               Ainda não existem reservas alugadas.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Conteúdo Arquivadas */}
+      {tab === "arquivadas" && (
+        <div className="mt-8">
+          <p className="text-sm text-gray-600">
+            Reservas arquivadas. Podem ser editadas ou desarquivadas para voltarem às reservas alugadas.
+          </p>
+
+          {arquivadasError ? (
+            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {arquivadasError}
+            </div>
+          ) : null}
+
+          {arquivadasLoading ? (
+            <p className="mt-6 text-gray-600">A carregar…</p>
+          ) : arquivadasPorAno.length ? (
+            <div className="mt-6 space-y-6">
+              {arquivadasPorAno.map(([ano, items]) => (
+                <section key={ano} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                  <h3 className="text-lg font-bold text-gray-900">Ano {ano}</h3>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                    {items.map((r) => (
+                      <article key={r.id} className="rounded-lg border border-amber-100 bg-amber-50/50 p-4">
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                            Arquivada
+                          </span>
+                        </div>
+                        <p className="text-sm font-semibold text-[#00923f]">{r.roupa.tema}</p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Utilizador:</span>{" "}
+                          {r.user?.name ?? r.nome ?? "—"} ({r.user?.email ?? r.email ?? "—"})
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Telefone:</span> {r.telefone ?? "—"}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Período:</span>{" "}
+                          {new Date(r.dataInicio).toLocaleDateString("pt-PT")} →{" "}
+                          {new Date(r.dataFim).toLocaleDateString("pt-PT")}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Valor base:</span>{" "}
+                          {Number(r.roupa.precoAluguer).toFixed(2)} €
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Calçado:</span>{" "}
+                          {r.incluiCalcado
+                            ? `Sim (+${Number(r.custoExtraCalcado ?? 0).toFixed(2)} €)`
+                            : "Não"}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Total referência:</span>{" "}
+                          {totalReservaReferencia(r).toFixed(2)} €
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Pagamento:</span>{" "}
+                          {labelPagamentoEstado(r.pagamentoEstado)}
+                          {normalizePagamentoEstado(r.pagamentoEstado) === "PAGO"
+                            ? ` · ${labelMetodoPagamento(r.metodoPagamento)}`
+                            : ""}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Observações:</span> {r.observacoes ?? "—"}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditReserva(r)}
+                            className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+                          >
+                            Editar reserva
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void arquivarReserva(r.id, false)}
+                            disabled={arquivandoId === r.id}
+                            className="rounded-lg border border-[#00923f]/30 bg-[#00923f]/10 px-3 py-1.5 text-xs font-semibold text-[#00923f] hover:bg-[#00923f]/20 disabled:opacity-60"
+                          >
+                            {arquivandoId === r.id ? "A desarquivar…" : "Desarquivar"}
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-8 text-gray-700">
+              Não existem reservas arquivadas.
             </div>
           )}
         </div>

@@ -104,6 +104,7 @@ model Reserva {
   // Pagamento (relevante sobretudo para reservas APROVADA / alugadas)
   pagamentoEstado String @default("POR_PAGAR") // POR_PAGAR | PAGO
   metodoPagamento String? // DINHEIRO_FISICO | TRANSFERENCIA_BANCARIA (quando PAGO)
+  arquivada   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

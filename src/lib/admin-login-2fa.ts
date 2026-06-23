@@ -40,6 +40,10 @@ export async function createAdminLoginChallenge(user: { id: string; email: strin
     },
   });
 
+  if (process.env.NODE_ENV === "development") {
+    console.log(`\n[DEV] Código 2FA para ${user.email}: ${code}\n`);
+  }
+
   await sendEmail({
     to: [user.email],
     subject: "Codigo de verificacao para login admin",

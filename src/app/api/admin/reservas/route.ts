@@ -13,12 +13,17 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const estado = url.searchParams.get("estado");
   const roupaId = url.searchParams.get("roupaId");
+  const arquivadaParam = url.searchParams.get("arquivada");
 
   const where: Prisma.ReservaWhereInput = {};
   if (estado && (RESERVA_ESTADOS as readonly string[]).includes(estado)) {
     where.estado = estado;
   }
   if (roupaId) where.roupaId = roupaId;
+  if (arquivadaParam === "true") {
+    where.arquivada = true;
+  }
+
 
   const items = await prisma.reserva.findMany({
     where,
@@ -37,6 +42,7 @@ export async function GET(req: NextRequest) {
       custoExtraCalcado: true,
       pagamentoEstado: true,
       metodoPagamento: true,
+      arquivada: true,
       createdAt: true,
       user: { select: { id: true, name: true, email: true } },
       roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
