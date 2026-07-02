@@ -37,6 +37,9 @@ type ReservaAdmin = {
   custoExtraArcos?: number;
   pagamentoEstado?: string | null;
   metodoPagamento?: string | null;
+  caucaoPaga?: boolean;
+  caucaoDevolvida?: boolean;
+  caucaoDevolvidaEm?: string | null;
   arquivada?: boolean;
   createdAt: string;
   user?: { id: string; name: string; email: string } | null;
@@ -253,6 +256,129 @@ function AlugadaPagamentoControls({
   );
 }
 
+function AlugadaCaucaoControls({
+  reserva,
+  onSaved,
+}: {
+  reserva: ReservaAdmin;
+  onSaved: () => void | Promise<void>;
+}) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [paga, setPaga] = useState(Boolean(reserva.caucaoPaga));
+  const [devolvida, setDevolvida] = useState(Boolean(reserva.caucaoDevolvida));
+  const [data, setData] = useState(() =>
+    reserva.caucaoDevolvidaEm ? reserva.caucaoDevolvidaEm.slice(0, 10) : ""
+  );
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    setPaga(Boolean(reserva.caucaoPaga));
+    setDevolvida(Boolean(reserva.caucaoDevolvida));
+    setData(reserva.caucaoDevolvidaEm ? reserva.caucaoDevolvidaEm.slice(0, 10) : "");
+    setErr("");
+  }, [reserva.id, reserva.caucaoPaga, reserva.caucaoDevolvida, reserva.caucaoDevolvidaEm]);
+
+  const serverPaga = Boolean(reserva.caucaoPaga);
+  const serverDevolvida = Boolean(reserva.caucaoDevolvida);
+  const serverData = reserva.caucaoDevolvidaEm ? reserva.caucaoDevolvidaEm.slice(0, 10) : "";
+  const dirty =
+    paga !== serverPaga ||
+    devolvida !== serverDevolvida ||
+    (devolvida && data !== serverData);
+  const podeGuardar = dirty && !saving && (!devolvida || !!data);
+
+  async function guardar() {
+    setSaving(true);
+    setErr("");
+    try {
+      const res = await fetch(`/api/admin/reservas/${reserva.id}/caucao`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caucaoPaga: paga,
+          caucaoDevolvida: paga ? devolvida : false,
+          caucaoDevolvidaEm: paga && devolvida ? data : null,
+        }),
+      });
+      const resp = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(resp.error ?? "Erro ao guardar a caução.");
+      await onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erro ao guardar.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+      <p className="text-xs font-semibold text-gray-800">Caução (100 €)</p>
+      <label className="mt-2 flex items-center gap-2 text-sm text-gray-800">
+        <input
+          type="checkbox"
+          checked={paga}
+          onChange={(e) => {
+            const v = e.target.checked;
+            setPaga(v);
+            if (!v) {
+              setDevolvida(false);
+              setData("");
+            }
+          }}
+          disabled={saving}
+          className="h-4 w-4 accent-[#00923f]"
+        />
+        Caução paga
+      </label>
+      <label
+        className={`mt-2 flex items-center gap-2 text-sm ${paga ? "text-gray-800" : "text-gray-400"}`}
+      >
+        <input
+          type="checkbox"
+          checked={devolvida}
+          onChange={(e) => {
+            const v = e.target.checked;
+            setDevolvida(v);
+            if (v && !data) setData(hoje);
+          }}
+          disabled={saving || !paga}
+          className="h-4 w-4 accent-[#00923f]"
+        />
+        Caução devolvida
+      </label>
+      {!paga ? (
+        <p className="mt-1 text-xs text-gray-500">
+          A devolução só fica disponível depois de a caução estar paga.
+        </p>
+      ) : null}
+      {devolvida ? (
+        <label className="mt-2 block text-xs text-gray-700">
+          <span className="mb-0.5 block font-medium">Data de devolução</span>
+          <input
+            type="date"
+            value={data}
+            onChange={(e) => setData(e.target.value)}
+            disabled={saving}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm sm:w-auto"
+          />
+        </label>
+      ) : null}
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={() => void guardar()}
+          disabled={!podeGuardar}
+          className="rounded-lg bg-[#00923f] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007a33] disabled:opacity-50"
+        >
+          {saving ? "A guardar…" : "Guardar caução"}
+        </button>
+      </div>
+      {err ? <p className="mt-2 text-xs text-red-600">{err}</p> : null}
+    </div>
+  );
+}
+
 function AdminPageInner() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -351,12 +477,18 @@ function AdminPageInner() {
     const groups = new Map<number, ReservaAdmin[]>();
     for (const item of alugadas) {
       if (item.arquivada) continue;
-      const ano = item.roupa.ano;
+      // Agrupar pelo ano de utilização (data de início da reserva).
+      const ano = new Date(item.dataInicio).getFullYear();
       const current = groups.get(ano) ?? [];
       current.push(item);
       groups.set(ano, current);
     }
-    return Array.from(groups.entries()).sort((a, b) => b[0] - a[0]);
+    const entries = Array.from(groups.entries()).sort((a, b) => b[0] - a[0]);
+    // Dentro de cada ano de utilização, ordenar pelo ano da farda (mais recente primeiro).
+    for (const [, items] of entries) {
+      items.sort((r1, r2) => r2.roupa.ano - r1.roupa.ano);
+    }
+    return entries;
   }, [alugadas]);
 
   const arquivadasPorAno = useMemo(() => {
@@ -1100,7 +1232,8 @@ function AdminPageInner() {
       {tab === "alugadas" && (
         <div className="mt-8">
           <p className="text-sm text-gray-600">
-            Lista geral de reservas atualmente alugadas (aprovadas), agrupadas por ano.
+            Lista geral de reservas atualmente alugadas (aprovadas), agrupadas pelo ano de
+            utilização (data de início da reserva).
           </p>
 
           {alugadasError ? (
@@ -1119,7 +1252,9 @@ function AdminPageInner() {
                   <div className="mt-3 grid gap-3 lg:grid-cols-2">
                     {items.map((r) => (
                       <article key={r.id} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                        <p className="text-sm font-semibold text-[#00923f]">{r.roupa.tema}</p>
+                        <p className="text-sm font-semibold text-[#00923f]">
+                          {r.roupa.tema} — {r.roupa.ano}
+                        </p>
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Utilizador:</span>{" "}
                           {r.user?.name ?? r.nome ?? "—"} ({r.user?.email ?? r.email ?? "—"})
@@ -1158,6 +1293,7 @@ function AdminPageInner() {
                         ) : (
                           <AlugadaPagamentoControls reserva={r} onSaved={() => void reloadAlugadas()} />
                         )}
+                        <AlugadaCaucaoControls reserva={r} onSaved={() => void reloadAlugadas()} />
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button
                             type="button"
@@ -1262,6 +1398,14 @@ function AdminPageInner() {
                           {normalizePagamentoEstado(r.pagamentoEstado) === "PAGO"
                             ? ` · ${labelMetodoPagamento(r.metodoPagamento)}`
                             : ""}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-medium">Caução:</span>{" "}
+                          {r.caucaoPaga
+                            ? r.caucaoDevolvida
+                              ? `Devolvida${r.caucaoDevolvidaEm ? ` em ${new Date(r.caucaoDevolvidaEm).toLocaleDateString("pt-PT")}` : ""}`
+                              : "Paga (por devolver)"
+                            : "Por pagar"}
                         </p>
                         <p className="mt-1 text-sm text-gray-700">
                           <span className="font-medium">Observações:</span> {r.observacoes ?? "—"}

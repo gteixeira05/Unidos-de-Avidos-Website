@@ -156,6 +156,26 @@ export default function TermosPage() {
             legalmente aplicáveis e das condições específicas acordadas.
           </p>
 
+          <h3 className="text-base font-semibold text-gray-900">Artigo 12.º-A (Caução)</h3>
+          <p>
+            Cada aluguer de roupa está sujeito ao pagamento de uma caução no valor de 100&nbsp;€ (cem
+            euros), destinada a garantir a correta devolução e o bom estado das peças.
+          </p>
+          <p>A caução é integralmente devolvida ao utilizador desde que, cumulativamente:</p>
+          <ul className="list-inside list-disc space-y-1 pl-1">
+            <li>
+              as peças sejam devolvidas no prazo máximo de 2 (dois) dias após a respetiva utilização,
+              salvo exceções previamente acordadas com a associação;
+            </li>
+            <li>as peças sejam entregues devidamente lavadas;</li>
+            <li>as peças sejam entregues em boas condições de conservação.</li>
+          </ul>
+          <p>
+            O incumprimento de qualquer uma das condições previstas no número anterior determina a perda
+            total da caução, sem prejuízo de outras consequências legalmente admissíveis em caso de dano
+            ou perda das peças.
+          </p>
+
           <h3 className="text-base font-semibold text-gray-900">Artigo 13.º (Entrega e devolução)</h3>
           <p>
             As condições de levantamento, entrega e devolução são fixadas pela associação no ato de

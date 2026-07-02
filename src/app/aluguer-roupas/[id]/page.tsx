@@ -6,7 +6,7 @@ import FormularioReserva from "./FormularioReserva";
 import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
-import { PrecoAluguerRoupa, StockFardasDetalhe } from "@/components/AluguerRoupasInfoPublic";
+import { PrecoAluguerRoupa, StockFardasDetalhe, PoliticaCaucao } from "@/components/AluguerRoupasInfoPublic";
 import { temCalcadoDisponivel } from "@/lib/aluguerRoupasPublic";
 
 export const revalidate = 120;
@@ -117,6 +117,8 @@ export default async function RoupaDetalhePage({
               <p><strong className="text-gray-800">Pagamento em dinheiro</strong> — efetuado no momento do levantamento.</p>
               <p><strong className="text-gray-800">Pagamento por transferência</strong> — até 2 dias antes do levantamento.</p>
             </div>
+
+            <PoliticaCaucao className="mt-3" />
 
             <a
               href={`https://wa.me/351914838942?text=${encodeURIComponent(`Quero saber mais informações acerca da roupa de ${roupa.ano}!`)}`}

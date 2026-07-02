@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import {
   formatPrecoAluguerPublico,
   QUANTIDADE_ARCOS_POR_ANO,
@@ -6,6 +7,55 @@ import {
 } from "@/lib/aluguerRoupasPublic";
 
 type Variant = "catalog" | "detail";
+
+/** Política de caução de 100 € — fonte única do texto, reutilizada no detalhe e no formulário. */
+export function PoliticaCaucao({ className }: { className?: string }) {
+  return (
+    <div
+      className={`rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 ${className ?? ""}`}
+    >
+      <div className="flex items-start gap-2">
+        <ShieldCheck
+          className="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+        <div className="min-w-0">
+          <p className="font-semibold text-amber-900">Caução de 100&nbsp;€</p>
+          <p className="mt-1 leading-relaxed text-amber-800">
+            Todos os alugueres de roupa passam a incluir uma caução de{" "}
+            <strong className="font-semibold">100&nbsp;€</strong>, devolvida na
+            totalidade desde que:
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-800">
+            <li>
+              A roupa nos seja entregue{" "}
+              <strong className="font-semibold">
+                no máximo até 2 dias após a sua utilização
+              </strong>{" "}
+              (salvo exceções acordadas connosco);
+            </li>
+            <li>
+              A roupa venha <strong className="font-semibold">lavada</strong> no
+              momento da entrega;
+            </li>
+            <li>
+              A roupa seja entregue{" "}
+              <strong className="font-semibold">em boas condições</strong>.
+            </li>
+          </ul>
+          <p className="mt-2 leading-relaxed text-amber-800">
+            Caso alguma destas condições não seja cumprida,{" "}
+            <strong className="font-semibold">
+              a caução não será devolvida
+            </strong>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function PrecoAluguerRoupa({
   precoAluguer,

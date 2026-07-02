@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, AlertTriangle } from "lucide-react";
 import PrivacyConsentField from "@/components/PrivacyConsentField";
 import TermsConsentField from "@/components/TermsConsentField";
+import { PoliticaCaucao } from "@/components/AluguerRoupasInfoPublic";
 import {
   formatPrecoAluguerPublico,
   getPrecoCalcadoPorAno,
@@ -37,6 +38,13 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
   const [aceitaTermos, setAceitaTermos] = useState(false);
   const [incluiCalcado, setIncluiCalcado] = useState(false);
   const [incluiArcos, setIncluiArcos] = useState(false);
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+
+  const formatarData = (iso: string) => {
+    if (!iso) return "";
+    const [ano, mes, dia] = iso.split("-");
+    return `${dia}/${mes}/${ano}`;
+  };
 
   const posEvento2026 = isPosEvento2026(roupa.ano, dataInicio);
 
@@ -66,28 +74,32 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
     };
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErro("");
-    setLoading(true);
 
     if (!dataInicio || !dataFim) {
       setErro("Por favor, selecione as datas de início e fim.");
-      setLoading(false);
       return;
     }
 
     if (!consentimentoPrivacidade) {
       setErro("Tem de aceitar a política de privacidade para enviar o pedido.");
-      setLoading(false);
       return;
     }
 
     if (!aceitaTermos) {
       setErro("Tem de aceitar os Termos e Condições para enviar o pedido.");
-      setLoading(false);
       return;
     }
+
+    // Validação OK — pede confirmação da data de entrega antes de enviar.
+    setMostrarConfirmacao(true);
+  };
+
+  const enviarPedido = async () => {
+    setErro("");
+    setLoading(true);
 
     try {
       const res = await fetch("/api/reservas", {
@@ -112,6 +124,7 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
       }
       setEnviado(true);
     } catch (err) {
+      setMostrarConfirmacao(false);
       setErro(err instanceof Error ? err.message : "Ocorreu um erro.");
     } finally {
       setLoading(false);
@@ -294,6 +307,20 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           </div>
         </div>
 
+        <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+            strokeWidth={2}
+            aria-hidden
+          />
+          <p className="min-w-0 leading-relaxed">
+            A <strong className="font-semibold">data de fim</strong> deve ser a
+            data em que vai <strong className="font-semibold">entregar</strong> a
+            roupa — idealmente no máximo 2 dias após a utilização. Caso
+            contrário, poderá perder a caução de 100&nbsp;€.
+          </p>
+        </div>
+
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
             Observações
@@ -425,6 +452,8 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           </ul>
         </div>
 
+        <PoliticaCaucao />
+
         <button
           type="submit"
           disabled={loading}
@@ -433,6 +462,75 @@ export default function FormularioReserva({ roupa }: { roupa: Roupa }) {
           {loading ? "A enviar..." : "Enviar Pedido de Reserva"}
         </button>
       </form>
+
+      {mostrarConfirmacao && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirmar-data-titulo"
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                <AlertTriangle
+                  className="h-5 w-5 text-amber-600"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              </div>
+              <div className="min-w-0">
+                <h3
+                  id="confirmar-data-titulo"
+                  className="text-lg font-semibold text-gray-900"
+                >
+                  Confirme a data de entrega
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                  Indicou{" "}
+                  <strong className="font-semibold text-gray-800">
+                    {formatarData(dataFim)}
+                  </strong>{" "}
+                  como fim da reserva. Esta deve ser a data em que nos vai{" "}
+                  <strong className="font-semibold text-gray-800">
+                    entregar
+                  </strong>{" "}
+                  a roupa (convém ser no máximo 2 dias após a utilização).
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                  Se entregar mais tarde — ou se a roupa não vier lavada e em boas
+                  condições — poderá ficar sem a{" "}
+                  <strong className="font-semibold text-gray-800">
+                    caução de 100&nbsp;€
+                  </strong>
+                  .
+                </p>
+                <p className="mt-3 text-sm font-medium text-gray-900">
+                  A data de fim está correta?
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setMostrarConfirmacao(false)}
+                disabled={loading}
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                Voltar e rever
+              </button>
+              <button
+                type="button"
+                onClick={enviarPedido}
+                disabled={loading}
+                className="rounded-lg bg-[#00923f] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#007a33] disabled:opacity-50"
+              >
+                {loading ? "A enviar..." : "Confirmar e enviar pedido"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
