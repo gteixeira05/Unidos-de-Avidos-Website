@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { addDays } from "date-fns";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
@@ -33,6 +34,109 @@ function reservaCobreDia(
   dataFim: Date
 ) {
   return dataInicio < next && dataFim >= d;
+}
+
+/**
+ * Liberta (ALUGADA → LIVRE) os dias de [inicio, fim] desta roupa que não estão
+ * cobertos por OUTRA reserva aprovada. Preserva MANUTENCAO. Usado quando uma
+ * reserva aprovada muda de datas/estado, para o calendário não ficar dessincronizado.
+ */
+async function liberarDiasIntervalo(
+  tx: Prisma.TransactionClient,
+  roupaId: string,
+  reservaIdExcluir: string,
+  inicio: Date,
+  fim: Date
+) {
+  const dInicio = toUTCDay(inicio);
+  const dFim = toUTCDay(fim);
+
+  const [outrasReservas, dispRows] = await Promise.all([
+    tx.reserva.findMany({
+      where: {
+        id: { not: reservaIdExcluir },
+        roupaId,
+        estado: "APROVADA",
+        dataInicio: { lt: addDays(dFim, 1) },
+        dataFim: { gte: dInicio },
+      },
+      select: { dataInicio: true, dataFim: true },
+    }),
+    tx.disponibilidade.findMany({
+      where: { roupaId, data: { gte: dInicio, lte: dFim } },
+      select: { id: true, data: true, estado: true },
+    }),
+  ]);
+
+  const dispPorDia = new Map<string, { id: string; estado: string }>();
+  for (const row of dispRows) {
+    dispPorDia.set(dayKeyUTC(row.data), { id: row.id, estado: row.estado });
+  }
+
+  const idsAlugadaParaLivre: string[] = [];
+  for (let d = dInicio; d <= dFim; d = addDays(d, 1)) {
+    const next = addDays(d, 1);
+    const cobertoPorOutra = outrasReservas.some((r) =>
+      reservaCobreDia(d, next, r.dataInicio, r.dataFim)
+    );
+    if (cobertoPorOutra) continue;
+    const existente = dispPorDia.get(dayKeyUTC(d));
+    if (existente?.estado === "ALUGADA") {
+      idsAlugadaParaLivre.push(existente.id);
+    }
+  }
+
+  if (idsAlugadaParaLivre.length > 0) {
+    await tx.disponibilidade.updateMany({
+      where: { id: { in: idsAlugadaParaLivre }, estado: "ALUGADA" },
+      data: { estado: "LIVRE" },
+    });
+  }
+}
+
+/**
+ * Ocupa (marca ALUGADA) os dias de [inicio, fim] desta roupa. Cria linhas em falta,
+ * promove LIVRE → ALUGADA e nunca sobrepõe MANUTENCAO.
+ */
+async function ocuparDiasIntervalo(
+  tx: Prisma.TransactionClient,
+  roupaId: string,
+  inicio: Date,
+  fim: Date
+) {
+  const dInicio = toUTCDay(inicio);
+  const dFim = toUTCDay(fim);
+
+  const existing = await tx.disponibilidade.findMany({
+    where: { roupaId, data: { gte: dInicio, lte: dFim } },
+    select: { id: true, data: true, estado: true },
+  });
+  const porDia = new Map<string, { id: string; estado: string }>();
+  for (const row of existing) {
+    porDia.set(dayKeyUTC(row.data), { id: row.id, estado: row.estado });
+  }
+
+  const idsParaAlugada: string[] = [];
+  const criar: { roupaId: string; data: Date; estado: string }[] = [];
+  for (let d = dInicio; d <= dFim; d = addDays(d, 1)) {
+    const row = porDia.get(dayKeyUTC(d));
+    if (row) {
+      if (row.estado === "LIVRE") idsParaAlugada.push(row.id);
+      // MANUTENCAO ou já ALUGADA: não tocar
+    } else {
+      criar.push({ roupaId, data: d, estado: "ALUGADA" });
+    }
+  }
+
+  if (idsParaAlugada.length > 0) {
+    await tx.disponibilidade.updateMany({
+      where: { id: { in: idsParaAlugada }, estado: "LIVRE" },
+      data: { estado: "ALUGADA" },
+    });
+  }
+  if (criar.length > 0) {
+    await tx.disponibilidade.createMany({ data: criar });
+  }
 }
 
 export async function PATCH(
@@ -133,19 +237,35 @@ export async function PATCH(
   }
 
   if (estado === "APROVADA") {
-    const conflito = await prisma.reserva.findFirst({
-      where: {
-        id: { not: id },
-        roupaId: reservaAtual.roupaId,
-        estado: "APROVADA",
-        dataInicio: { lte: dataFim },
-        dataFim: { gte: dataInicio },
-      },
-      select: { id: true },
-    });
+    const [conflito, manutencao] = await Promise.all([
+      prisma.reserva.findFirst({
+        where: {
+          id: { not: id },
+          roupaId: reservaAtual.roupaId,
+          estado: "APROVADA",
+          dataInicio: { lte: dataFim },
+          dataFim: { gte: dataInicio },
+        },
+        select: { id: true },
+      }),
+      prisma.disponibilidade.findFirst({
+        where: {
+          roupaId: reservaAtual.roupaId,
+          estado: "MANUTENCAO",
+          data: { gte: toUTCDay(dataInicio), lte: toUTCDay(dataFim) },
+        },
+        select: { id: true },
+      }),
+    ]);
     if (conflito) {
       return Response.json(
         { error: "Já existe outra reserva aprovada a ocupar este período." },
+        { status: 409 }
+      );
+    }
+    if (manutencao) {
+      return Response.json(
+        { error: "Não é possível: há dias marcados como manutenção neste período." },
         { status: 409 }
       );
     }
@@ -164,7 +284,7 @@ export async function PATCH(
   const posEvento = isPosEvento2026(reservaAtual.roupa.ano, dataInicioRaw);
   const ano2026PreEvento = reservaAtual.roupa.ano === 2026 && !posEvento;
 
-  const calcadoData: { incluiCalcado: boolean; custoExtraCalcado: number } | {} =
+  const calcadoData: { incluiCalcado: boolean; custoExtraCalcado: number } | Record<string, never> =
     hasIncluiCalcadoInBody
       ? (() => {
           const incluir = Boolean(body.incluiCalcado);
@@ -176,7 +296,7 @@ export async function PATCH(
         })()
       : {};
 
-  const arcosData: { incluiArcos: boolean; custoExtraArcos: number } | {} =
+  const arcosData: { incluiArcos: boolean; custoExtraArcos: number } | Record<string, never> =
     hasIncluiArcosInBody
       ? (() => {
           const incluir = Boolean(body.incluiArcos);
@@ -187,39 +307,65 @@ export async function PATCH(
         })()
       : {};
 
-  const updated = await prisma.reserva.update({
-    where: { id },
-    data: {
-      estado,
-      dataInicio,
-      dataFim,
-      nome,
-      email,
-      telefone,
-      observacoes,
-      ...calcadoData,
-      ...arcosData,
-      ...paymentData,
+  const eraAprovada = reservaAtual.estado === "APROVADA";
+  const ficaAprovada = estado === "APROVADA";
+
+  const updated = await prisma.$transaction(
+    async (tx) => {
+      // Se a reserva estava aprovada, libertar primeiro os dias ANTIGOS (senão ficam presos no calendário).
+      if (eraAprovada) {
+        await liberarDiasIntervalo(
+          tx,
+          reservaAtual.roupaId,
+          id,
+          reservaAtual.dataInicio,
+          reservaAtual.dataFim
+        );
+      }
+
+      const u = await tx.reserva.update({
+        where: { id },
+        data: {
+          estado,
+          dataInicio,
+          dataFim,
+          nome,
+          email,
+          telefone,
+          observacoes,
+          ...calcadoData,
+          ...arcosData,
+          ...paymentData,
+        },
+        select: {
+          id: true,
+          estado: true,
+          dataInicio: true,
+          dataFim: true,
+          nome: true,
+          email: true,
+          telefone: true,
+          observacoes: true,
+          incluiCalcado: true,
+          custoExtraCalcado: true,
+          incluiArcos: true,
+          custoExtraArcos: true,
+          pagamentoEstado: true,
+          metodoPagamento: true,
+          user: { select: { id: true, name: true, email: true } },
+          roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
+        },
+      });
+
+      // Se a reserva fica aprovada, ocupar os dias NOVOS.
+      if (ficaAprovada) {
+        await ocuparDiasIntervalo(tx, reservaAtual.roupaId, dataInicio, dataFim);
+      }
+
+      return u;
     },
-    select: {
-      id: true,
-      estado: true,
-      dataInicio: true,
-      dataFim: true,
-      nome: true,
-      email: true,
-      telefone: true,
-      observacoes: true,
-      incluiCalcado: true,
-      custoExtraCalcado: true,
-      incluiArcos: true,
-      custoExtraArcos: true,
-      pagamentoEstado: true,
-      metodoPagamento: true,
-      user: { select: { id: true, name: true, email: true } },
-      roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
-    },
-  });
+    { maxWait: 10_000, timeout: 60_000 }
+  );
 
   if (updated.user?.id && reservaAtual.estado !== estado) {
     await prisma.notification.create({
