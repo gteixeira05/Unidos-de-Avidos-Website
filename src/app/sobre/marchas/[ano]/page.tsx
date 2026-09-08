@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { MARCHAS_INFO } from "@/lib/marchasAntoninas";
 import { Play } from "lucide-react";
 
@@ -27,11 +26,6 @@ export default async function MarchaAnoPage({
       </div>
     );
   }
-
-  const roupa = await prisma.roupa.findFirst({
-    where: { ano },
-    orderBy: { createdAt: "desc" },
-  });
 
   const info = MARCHAS_INFO[ano];
   const actuacaoUrl = info?.youtubeUrl;
@@ -61,9 +55,9 @@ export default async function MarchaAnoPage({
               <p className="mt-4 text-lg font-medium text-gray-900">
                 Tema: {temaResolvido}
               </p>
-              {roupa?.descricao?.trim() ? (
+              {info?.descricaoCard?.trim() ? (
                 <p className="mt-4 whitespace-pre-line text-sm text-gray-700">
-                  {roupa.descricao}
+                  {info.descricaoCard}
                 </p>
               ) : (
                 <p className="mt-4 text-sm text-gray-600">

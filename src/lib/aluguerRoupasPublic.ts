@@ -30,7 +30,7 @@ export function getPrecoCalcadoPorAno(ano: number): number | null {
 }
 
 export function temCalcadoDisponivel(ano: number): boolean {
-  return getPrecoCalcadoPorAno(ano) !== null;
+  return ano === 2026 || getPrecoCalcadoPorAno(ano) !== null;
 }
 
 /** Preços especiais para a roupa de 2026 em reservas com início a partir de 2027-01-01. */

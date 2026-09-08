@@ -11,12 +11,8 @@ const SEM_TEMA_TITULO = "Ainda não há informação";
 const SEM_TEMA_DESCRICAO =
   "Informação sobre a participação neste ano ainda não disponível.";
 
-function descricaoParaAno(
-  descricaoRoupa: string | null | undefined,
-  descricaoCard: string | undefined
-): string {
+function descricaoParaAno(descricaoCard: string | undefined): string {
   if (descricaoCard) return descricaoCard;
-  if (descricaoRoupa?.trim()) return descricaoRoupa;
   return "Consulte a página do ano para tema, classificação e galeria quando disponíveis.";
 }
 
@@ -28,7 +24,6 @@ export default async function MarchasAntoninasPage() {
       id: true,
       ano: true,
       tema: true,
-      descricao: true,
     },
   });
 
@@ -42,7 +37,7 @@ export default async function MarchasAntoninasPage() {
     const temTema = !!temaOficial;
     const tema = temTema ? temaOficial : SEM_TEMA_TITULO;
     const descricao = temTema
-      ? descricaoParaAno(r?.descricao, info?.descricaoCard)
+      ? descricaoParaAno(info?.descricaoCard)
       : SEM_TEMA_DESCRICAO;
     return { ano, tema, descricao };
   });
