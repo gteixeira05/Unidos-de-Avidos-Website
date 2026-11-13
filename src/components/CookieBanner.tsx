@@ -1,20 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "ua_cookie_consent_v1";
 
+// Fecha o banner mesmo quando o localStorage está bloqueado (ex.: navegação privada).
+let dismissed = false;
+const listeners = new Set<() => void>();
+
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  window.addEventListener("storage", onChange); // aceitar noutro separador também fecha aqui
+  return () => {
+    listeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function shouldShow() {
+  if (dismissed) return false;
+  try {
+    return !window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return true;
+  }
+}
+
 export default function CookieBanner() {
-  const [visible, setVisible] = useState<boolean>(() => {
-    try {
-      if (typeof window === "undefined") return false;
-      const accepted = window.localStorage.getItem(STORAGE_KEY);
-      return !accepted;
-    } catch {
-      return true;
-    }
-  });
+  // Servidor e 1.º render no browser dão "false" → sem hydration mismatch; depois lê o localStorage.
+  const visible = useSyncExternalStore(subscribe, shouldShow, () => false);
 
   function accept() {
     try {
@@ -22,7 +37,8 @@ export default function CookieBanner() {
     } catch {
       /* ignore */
     }
-    setVisible(false);
+    dismissed = true;
+    listeners.forEach((notify) => notify());
   }
 
   if (!visible) return null;
