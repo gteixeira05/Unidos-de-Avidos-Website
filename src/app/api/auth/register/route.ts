@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, validatePassword } from "@/lib/password";
-import { consumeRateLimit, getClientIp, normalizeEmail } from "@/lib/security";
+import { consumeRateLimitDb, getClientIp, normalizeEmail } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request);
-    const ipLimit = consumeRateLimit({
+    const ipLimit = await consumeRateLimitDb({
       key: `auth:register:ip:${ip}`,
       limit: 10,
       windowMs: 60 * 60 * 1000,

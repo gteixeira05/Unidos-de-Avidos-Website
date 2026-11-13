@@ -1,29 +1,13 @@
-import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml, generateSixDigitCode, hashShortCode } from "@/lib/security";
 
 const CODE_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 
-function getOtpSecret() {
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-  if (!secret) {
-    throw new Error("AUTH_SECRET (ou NEXTAUTH_SECRET) não está definido.");
-  }
-  return secret;
-}
-
-function hashOtpCode(code: string) {
-  return crypto.createHash("sha256").update(`${getOtpSecret()}::${code}`).digest("hex");
-}
-
-function generateOtpCode() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
 export async function createAdminLoginChallenge(user: { id: string; email: string; name: string }) {
-  const code = generateOtpCode();
-  const codeHash = hashOtpCode(code);
+  const code = generateSixDigitCode();
+  const codeHash = hashShortCode(code);
   const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60_000);
 
   await prisma.adminLoginChallenge.updateMany({
@@ -50,7 +34,7 @@ export async function createAdminLoginChallenge(user: { id: string; email: strin
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
         <h2 style="margin:0 0 12px">Verificacao de login admin</h2>
-        <p>Ola ${user.name},</p>
+        <p>Ola ${escapeHtml(user.name)},</p>
         <p>Recebemos um pedido de login na area de administracao. Use este codigo para concluir a autenticacao:</p>
         <p style="font-size:28px;font-weight:700;letter-spacing:4px;margin:16px 0">${code}</p>
         <p>Este codigo expira em ${CODE_TTL_MINUTES} minutos.</p>
@@ -95,7 +79,12 @@ export async function verifyAdminLoginChallenge(
     return { ok: false, reason: "expired" };
   }
 
-  if (challenge.attempts >= MAX_ATTEMPTS) {
+  // Incremento atómico: pedidos em paralelo não ultrapassam MAX_ATTEMPTS.
+  const claimed = await prisma.adminLoginChallenge.updateMany({
+    where: { id: challenge.id, used: false, attempts: { lt: MAX_ATTEMPTS } },
+    data: { attempts: { increment: 1 } },
+  });
+  if (claimed.count === 0) {
     await prisma.adminLoginChallenge.update({
       where: { id: challenge.id },
       data: { used: true },
@@ -103,19 +92,16 @@ export async function verifyAdminLoginChallenge(
     return { ok: false, reason: "too_many_attempts" };
   }
 
-  const incomingHash = hashOtpCode(code);
-  if (incomingHash !== challenge.codeHash) {
-    await prisma.adminLoginChallenge.update({
-      where: { id: challenge.id },
-      data: { attempts: { increment: 1 } },
-    });
+  if (hashShortCode(code) !== challenge.codeHash) {
     return { ok: false, reason: "invalid" };
   }
 
-  await prisma.adminLoginChallenge.update({
-    where: { id: challenge.id },
+  // Só um pedido consegue consumir o código.
+  const consumed = await prisma.adminLoginChallenge.updateMany({
+    where: { id: challenge.id, used: false },
     data: { used: true },
   });
+  if (consumed.count === 0) return { ok: false, reason: "invalid" };
 
   return { ok: true, userId: challenge.userId };
 }

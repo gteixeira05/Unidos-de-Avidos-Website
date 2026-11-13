@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/session-cookie";
-import { consumeRateLimit, getClientIp, shouldAllowMutationFromOrigin } from "@/lib/security";
+import { consumeRateLimit, getClientIp, shouldAllowMutationFromOrigin } from "@/utils/security";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 

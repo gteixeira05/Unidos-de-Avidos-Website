@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/security";
 import {
   getAdminTeamForReservaNotify,
   collectReservaNotifyEmails,
@@ -83,12 +84,12 @@ export async function POST(req: NextRequest) {
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
             <h2 style="margin:0 0 12px;color:#00923f">Nova avaliação por aprovar</h2>
-            <p><strong>${avaliacao.user.name}</strong> deixou uma nova avaliação:</p>
+            <p><strong>${escapeHtml(avaliacao.user.name)}</strong> deixou uma nova avaliação:</p>
             <p style="font-size:22px;margin:8px 0">
               ${"★".repeat(nota)}${"☆".repeat(5 - nota)}
               <span style="font-size:14px;color:#6b7280"> (${nota}/5)</span>
             </p>
-            ${comentario ? `<p style="background:#f9fafb;border-left:4px solid #00923f;padding:10px 14px;border-radius:4px">"${comentario}"</p>` : ""}
+            ${comentario ? `<p style="background:#f9fafb;border-left:4px solid #00923f;padding:10px 14px;border-radius:4px">"${escapeHtml(comentario)}"</p>` : ""}
             <p style="margin-top:20px">
               <a href="${baseUrl}/admin?tab=avaliacoes" style="background:#00923f;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600">
                 Ver no painel admin

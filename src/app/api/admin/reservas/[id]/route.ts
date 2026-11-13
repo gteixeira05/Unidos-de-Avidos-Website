@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/security";
 import { logAdminAction } from "@/lib/admin-audit";
 import {
   PAGAMENTO_ESTADOS,
@@ -387,7 +388,7 @@ export async function PATCH(
         subject: `Reserva ${estado.toLowerCase()} — ${updated.roupa.tema} (${updated.roupa.ano})`,
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.4">
-            <p>Olá${updated.user.name ? `, ${updated.user.name}` : ""}.</p>
+            <p>Olá${updated.user.name ? `, ${escapeHtml(updated.user.name)}` : ""}.</p>
             <p>O seu pedido de reserva para <strong>${updated.roupa.tema} (${updated.roupa.ano})</strong> foi <strong>${estado.toLowerCase()}</strong>.</p>
             <p><strong>Período:</strong> ${inicioFmt} → ${fimFmt}</p>
             <p><a href="${baseUrl}/perfil#sec-notificacoes">Ver no site</a></p>

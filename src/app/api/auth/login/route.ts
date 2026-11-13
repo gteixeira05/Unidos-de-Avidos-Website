@@ -4,16 +4,20 @@ import { verifyPassword } from "@/lib/password";
 import { getSessionCookieName, signSessionJwt } from "@/lib/auth";
 import { isSuperAdminEmail } from "@/lib/super-admin";
 import { getSessionCookieOptions } from "@/lib/session-cookie";
-import { consumeRateLimit, getClientIp, normalizeEmail } from "@/lib/security";
+import { consumeRateLimitDb, getClientIp, normalizeEmail } from "@/lib/security";
 import {
   createAdminLoginChallenge,
   verifyAdminLoginChallenge,
 } from "@/lib/admin-login-2fa";
 
-function buildSessionResponse(user: { id: string; name: string; email: string; role: string }) {
+function buildSessionResponse(
+  user: { id: string; name: string; email: string; role: string },
+  sessionVersion: number | null | undefined
+) {
   return signSessionJwt({
     id: user.id,
     role: user.role === "ADMIN" ? "ADMIN" : "USER",
+    sessionVersion: sessionVersion ?? 0,
   }).then((token) => {
     const res = NextResponse.json({ success: true, user });
     res.cookies.set(getSessionCookieName(), token, getSessionCookieOptions(60 * 60 * 24 * 7));
@@ -24,7 +28,7 @@ function buildSessionResponse(user: { id: string; name: string; email: string; r
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request);
-    const ipLimit = consumeRateLimit({
+    const ipLimit = await consumeRateLimitDb({
       key: `auth:login:ip:${ip}`,
       limit: 20,
       windowMs: 10 * 60 * 1000,
@@ -106,7 +110,7 @@ export async function POST(request: NextRequest) {
         email: user.email,
         role: isSuperAdminEmail(user.email) ? "SUPER_ADMIN" : user.role,
       };
-      return buildSessionResponse(safeUser);
+      return buildSessionResponse(safeUser, user.sessionVersion);
     }
 
     const normalizedEmail = normalizeEmail(email);
@@ -117,7 +121,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const emailLimit = consumeRateLimit({
+    const emailLimit = await consumeRateLimitDb({
       key: `auth:login:email:${normalizedEmail}`,
       limit: 8,
       windowMs: 10 * 60 * 1000,
@@ -171,7 +175,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return buildSessionResponse(safeUser);
+    return buildSessionResponse(safeUser, user.sessionVersion);
   } catch (error) {
     console.error("Erro no login:", error);
     return Response.json(

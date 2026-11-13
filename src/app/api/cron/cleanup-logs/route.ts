@@ -18,6 +18,9 @@ export async function GET(req: NextRequest) {
     where: { createdAt: { lt: cutoff } },
   });
 
+  // Limpa janelas de rate limit expiradas.
+  await prisma.rateLimit.deleteMany({ where: { resetAt: { lt: new Date() } } });
+
   return Response.json({
     success: true,
     deleted: result.count,

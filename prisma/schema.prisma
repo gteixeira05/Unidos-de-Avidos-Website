@@ -24,6 +24,7 @@ model User {
   emailComunicacoesConsentAt     DateTime?
   emailComunicacoesConsentVersion String?
   emailComunicacoesRevokedAt     DateTime?
+  sessionVersion Int?     // incrementado para revogar todas as sessões (JWT "sv")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   reservas      Reserva[]
@@ -35,7 +36,8 @@ model User {
 model PasswordReset {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String
-  code      String   // Código de 6 dígitos
+  code      String   // hash SHA-256 do código de 6 dígitos
+  attempts  Int?
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -200,3 +202,13 @@ model AdminLoginChallenge {
   @@index([expiresAt])
 }
 
+
+// Rate limiting partilhado entre instâncias serverless (auth, contacto)
+model RateLimit {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  key     String   @unique
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
+}

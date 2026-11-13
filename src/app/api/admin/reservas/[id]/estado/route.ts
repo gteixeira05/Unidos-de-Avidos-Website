@@ -3,6 +3,7 @@ import { addDays } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/security";
 import { logAdminAction } from "@/lib/admin-audit";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -169,7 +170,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         subject: `Reserva ${novoEstado.toLowerCase()} — ${reserva.roupa.tema} (${reserva.roupa.ano})`,
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.4">
-            <p>Olá${utilizador.name ? `, ${utilizador.name}` : ""}.</p>
+            <p>Olá${utilizador.name ? `, ${escapeHtml(utilizador.name)}` : ""}.</p>
             <p>O seu pedido de reserva para <strong>${reserva.roupa.tema} (${reserva.roupa.ano})</strong> foi <strong>${novoEstado.toLowerCase()}</strong>.</p>
             <p><strong>Período:</strong> ${inicioFmt} → ${fimFmt}</p>
             <p><a href="${baseUrl}/perfil#sec-notificacoes">Ver no site</a></p>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactFormAdminEmails } from "@/lib/admin-notify-recipients";
 import { sendEmail } from "@/lib/email";
+import { consumeRateLimitDb, escapeHtml, getClientIp, normalizeEmail } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   if (!process.env.RESEND_API_KEY) {
@@ -11,12 +12,32 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
-    const { nome, email, mensagem } = body ?? {};
+    const limit = await consumeRateLimitDb({
+      key: `contacto:ip:${getClientIp(request)}`,
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Demasiadas mensagens. Tente novamente mais tarde." },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } }
+      );
+    }
 
-    if (!nome?.trim() || !email?.trim() || !mensagem?.trim()) {
+    const body = await request.json().catch(() => ({}));
+    const nome = typeof body?.nome === "string" ? body.nome.trim() : "";
+    const email = normalizeEmail(body?.email);
+    const mensagem = typeof body?.mensagem === "string" ? body.mensagem.trim() : "";
+
+    if (!nome || !email || !mensagem) {
       return NextResponse.json(
         { error: "Nome, email e mensagem são obrigatórios." },
+        { status: 400 }
+      );
+    }
+    if (nome.length > 120 || mensagem.length > 5000) {
+      return NextResponse.json(
+        { error: "Nome ou mensagem demasiado longos." },
         { status: 400 }
       );
     }
@@ -31,12 +52,12 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: emailsAdmins,
-      replyTo: email.trim(),
-      subject: `Contacto do site: ${nome.trim()}`,
+      replyTo: email,
+      subject: `Contacto do site: ${nome.replace(/[\r\n]+/g, " ")}`,
       html: `
         <p><strong>Novo contacto através do site Unidos de Avidos</strong></p>
-        <p><strong>Nome:</strong> ${escapeHtml(nome.trim())}</p>
-        <p><strong>Email:</strong> ${escapeHtml(email.trim())}</p>
+        <p><strong>Nome:</strong> ${escapeHtml(nome)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
         <p><strong>Mensagem:</strong></p>
         <p>${escapeHtml(mensagem.trim()).replace(/\n/g, "<br>")}</p>
       `,
@@ -52,10 +73,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}

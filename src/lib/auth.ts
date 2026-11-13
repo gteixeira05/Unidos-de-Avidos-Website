@@ -19,9 +19,11 @@ export function getSessionCookieName() {
   return SESSION_COOKIE_NAME;
 }
 
-export async function signSessionJwt(user: Pick<SessionUser, "id" | "role">) {
+export async function signSessionJwt(
+  user: Pick<SessionUser, "id" | "role"> & { sessionVersion: number }
+) {
   const secretKey = getSecretKey();
-  return await new SignJWT({ role: user.role })
+  return await new SignJWT({ role: user.role, sv: user.sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
     .setIssuedAt()
@@ -29,8 +31,8 @@ export async function signSessionJwt(user: Pick<SessionUser, "id" | "role">) {
     .sign(secretKey);
 }
 
-/** Verifica o JWT e devolve o id do utilizador (sub). O campo role no token não é fonte de verdade. */
-export async function getUserIdFromSessionToken(token: string): Promise<string | null> {
+/** Verifica o JWT e devolve o id (sub) e a versão de sessão (sv). O campo role no token não é fonte de verdade. */
+async function verifySessionToken(token: string): Promise<{ userId: string; sv: number } | null> {
   try {
     const secretKey = getSecretKey();
     const { payload } = await jwtVerify(token, secretKey, {
@@ -38,21 +40,23 @@ export async function getUserIdFromSessionToken(token: string): Promise<string |
     });
     const sub = payload.sub;
     if (typeof sub !== "string") return null;
-    return sub;
+    return { userId: sub, sv: typeof payload.sv === "number" ? payload.sv : 0 };
   } catch {
     return null;
   }
 }
 
 async function getSessionFromToken(token: string): Promise<SessionUser | null> {
-  const userId = await getUserIdFromSessionToken(token);
-  if (!userId) return null;
+  const verified = await verifySessionToken(token);
+  if (!verified) return null;
 
   const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, role: true, email: true, name: true },
+    where: { id: verified.userId },
+    select: { id: true, role: true, email: true, name: true, sessionVersion: true },
   });
   if (!user) return null;
+  // Logout / reset de password incrementam sessionVersion → tokens antigos deixam de valer.
+  if ((user.sessionVersion ?? 0) !== verified.sv) return null;
   if (user.role !== "ADMIN" && user.role !== "USER") return null;
 
   const isSuperAdmin = isSuperAdminEmail(user.email);

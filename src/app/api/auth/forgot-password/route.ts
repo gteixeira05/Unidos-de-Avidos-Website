@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
-import { consumeRateLimit, getClientIp, normalizeEmail } from "@/lib/security";
+import {
+  consumeRateLimitDb,
+  generateSixDigitCode,
+  getClientIp,
+  hashShortCode,
+  normalizeEmail,
+} from "@/lib/security";
 
 const CODE_EXPIRY_MINUTES = 15;
-
-function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
 
 export async function POST(request: NextRequest) {
   if (!process.env.RESEND_API_KEY) {
@@ -19,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const ip = getClientIp(request);
-    const ipLimit = consumeRateLimit({
+    const ipLimit = await consumeRateLimitDb({
       key: `auth:forgot:ip:${ip}`,
       limit: 5,
       windowMs: 15 * 60 * 1000,
@@ -41,28 +43,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
+    // Resposta igual exista ou não a conta (evita descobrir emails registados).
+    const okResponse = NextResponse.json({
+      success: true,
+      message: "Se existir uma conta com este email, enviámos um código. Verifique o seu email.",
     });
 
-    if (!user) {
-      return NextResponse.json(
-        {
-          error:
-            "Não existe nenhuma conta associada a este email. Verifique o endereço ou crie uma conta.",
-        },
-        { status: 404 }
-      );
-    }
+    const emailLimit = await consumeRateLimitDb({
+      key: `auth:forgot:email:${normalizedEmail}`,
+      limit: 3,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!emailLimit.ok) return okResponse;
 
-    const code = generateCode();
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
+    if (!user) return okResponse;
+
+    // Só o código mais recente é válido.
+    await prisma.passwordReset.updateMany({
+      where: { email: normalizedEmail, used: false },
+      data: { used: true },
+    });
+
+    const code = generateSixDigitCode();
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + CODE_EXPIRY_MINUTES);
 
     await prisma.passwordReset.create({
       data: {
         email: normalizedEmail,
-        code,
+        code: hashShortCode(code),
+        attempts: 0,
         expiresAt,
       },
     });
@@ -79,10 +93,7 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Código enviado. Verifique o seu email.",
-    });
+    return okResponse;
   } catch (err) {
     console.error("Erro forgot-password:", err);
     return NextResponse.json(

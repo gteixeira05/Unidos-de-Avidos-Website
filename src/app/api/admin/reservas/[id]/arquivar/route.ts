@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
 import { logAdminAction } from "@/lib/admin-audit";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/security";
 
 export async function PATCH(
   req: NextRequest,
@@ -55,7 +56,7 @@ export async function PATCH(
         html: `
           <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
             <h2 style="margin:0 0 12px;color:#00923f">Reserva concluída</h2>
-            <p>Olá${nomeDestino ? `, ${nomeDestino}` : ""},</p>
+            <p>Olá${nomeDestino ? `, ${escapeHtml(nomeDestino)}` : ""},</p>
             <p>A sua reserva de <strong>${reserva.roupa.tema} (${reserva.roupa.ano})</strong> foi concluída e arquivada.</p>
             <p><strong>Período:</strong> ${inicioFmt} → ${fimFmt}</p>
             <p style="margin-top:20px">Esperamos que tenha gostado do nosso serviço. Seria uma honra receber a sua avaliação!</p>
