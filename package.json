@@ -43,5 +43,13 @@
     "tailwindcss": "^4.2.2",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
+  },
+  "allowScripts": {
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "esbuild": true,
+    "fsevents": true,
+    "prisma": true,
+    "unrs-resolver": true
   }
 }
