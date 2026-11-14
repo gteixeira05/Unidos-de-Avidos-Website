@@ -1,7 +1,10 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionCookieName, getSessionFromRequest } from "@/lib/auth";
 import { isSuperAdminEmail } from "@/lib/super-admin";
+import { getSessionCookieOptions } from "@/lib/session-cookie";
+import { verifyPassword } from "@/lib/password";
+import { consumeRateLimitDb } from "@/lib/security";
 
 function isUnknownConsentFieldError(error: unknown): boolean {
   return (
@@ -201,3 +204,76 @@ export async function PATCH(req: NextRequest) {
   return Response.json({ success: true, user }, { status: 200 });
 }
 
+
+/**
+ * RGPD — o utilizador elimina a própria conta (pede a password).
+ * As reservas ficam para histórico/contabilidade, mas anonimizadas; avaliações e notificações são apagadas.
+ */
+export async function DELETE(req: NextRequest) {
+  const session = await getSessionFromRequest(req);
+  if (!session) return Response.json({ error: "Não autenticado." }, { status: 401 });
+
+  if (session.role === "ADMIN" || session.isSuperAdmin) {
+    return Response.json(
+      { error: "Contas de administração não podem ser eliminadas aqui. Peça a outro administrador para retirar as permissões primeiro." },
+      { status: 403 }
+    );
+  }
+
+  const limit = await consumeRateLimitDb({
+    key: `auth:delete-account:${session.id}`,
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limit.ok) {
+    return Response.json(
+      { error: "Demasiadas tentativas. Tente novamente mais tarde." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } }
+    );
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const password = typeof body?.password === "string" ? body.password : "";
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: { id: true, email: true, passwordHash: true },
+  });
+  if (!user || !password || !(await verifyPassword(password, user.passwordHash))) {
+    return Response.json({ error: "Password incorreta." }, { status: 401 });
+  }
+
+  const pendente = await prisma.reserva.findFirst({
+    where: {
+      userId: user.id,
+      OR: [
+        { estado: "PENDENTE" },
+        { estado: "APROVADA", arquivada: false },
+        { caucaoPaga: true, caucaoDevolvida: false },
+      ],
+    },
+    select: { id: true },
+  });
+  if (pendente) {
+    return Response.json(
+      {
+        error:
+          "Tem reservas em curso ou uma caução por devolver. Cancele as reservas pendentes ou aguarde a conclusão antes de eliminar a conta.",
+      },
+      { status: 409 }
+    );
+  }
+
+  await prisma.reserva.updateMany({
+    where: { userId: user.id },
+    data: { userId: null, nome: "Conta eliminada", email: null, telefone: null, observacoes: null },
+  });
+  await prisma.avaliacao.deleteMany({ where: { userId: user.id } });
+  await prisma.notification.deleteMany({ where: { userId: user.id } });
+  await prisma.passwordReset.deleteMany({ where: { email: user.email } });
+  await prisma.adminLoginChallenge.deleteMany({ where: { userId: user.id } });
+  await prisma.user.delete({ where: { id: user.id } });
+
+  const res = NextResponse.json({ success: true });
+  res.cookies.set(getSessionCookieName(), "", getSessionCookieOptions(0));
+  return res;
+}

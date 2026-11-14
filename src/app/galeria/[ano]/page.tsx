@@ -1,8 +1,29 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import GaleriaAlbumContent from "@/components/GaleriaAlbumContent";
+import { pageMetadata, shareImage } from "@/lib/seo";
+import type { Metadata } from "next";
 
 export const revalidate = 120;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ ano: string }>;
+}): Promise<Metadata> {
+  const { ano } = await params;
+  const year = Number.isNaN(Number(ano))
+    ? null
+    : await prisma.galleryYear
+        .findUnique({ where: { ano: Number(ano) }, select: { coverImageUrl: true } })
+        .catch(() => null);
+  return pageMetadata({
+    title: `Galeria ${ano}`,
+    description: `Fotografias dos Unidos de Avidos nas Marchas Antoninas de Vila Nova de Famalicão ${ano}.`,
+    path: `/galeria/${ano}`,
+    image: shareImage(year?.coverImageUrl),
+  });
+}
 
 export default async function GaleriaAnoPage({
   params,

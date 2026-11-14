@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Política de privacidade | Unidos de Avidos",
+  title: "Política de privacidade",
   description:
     "Política de Privacidade da Associação Unidos de Avidos, em conformidade com o RGPD e a legislação portuguesa aplicável.",
 };

@@ -1,6 +1,24 @@
 import Link from "next/link";
 import { MARCHAS_INFO } from "@/lib/marchasAntoninas";
 import { Play } from "lucide-react";
+import { pageMetadata, shortText } from "@/lib/seo";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ ano: string }>;
+}): Promise<Metadata> {
+  const { ano } = await params;
+  const info = MARCHAS_INFO[Number(ano)];
+  return pageMetadata({
+    title: `Marchas Antoninas ${ano}`,
+    description:
+      shortText([info?.tema, info?.descricaoCard].filter(Boolean).join(". ")) ||
+      `A participação dos Unidos de Avidos nas Marchas Antoninas de Vila Nova de Famalicão em ${ano}.`,
+    path: `/sobre/marchas/${ano}`,
+  });
+}
 
 export default async function MarchaAnoPage({
   params,

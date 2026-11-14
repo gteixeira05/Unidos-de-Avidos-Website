@@ -1,5 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import GaleriaIndexContent from "@/components/GaleriaIndexContent";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Galeria",
+  description:
+    "Fotografias das participações dos Unidos de Avidos nas Marchas Antoninas, organizadas por ano.",
+  path: "/galeria",
+});
 
 export const revalidate = 120;
 

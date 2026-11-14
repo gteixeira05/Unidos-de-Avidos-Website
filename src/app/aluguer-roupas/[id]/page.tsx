@@ -8,8 +8,40 @@ import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
 import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
 import { PrecoAluguerRoupa, StockFardasDetalhe, PoliticaCaucao } from "@/components/AluguerRoupasInfoPublic";
 import { temCalcadoDisponivel } from "@/lib/aluguerRoupasPublic";
+import { pageMetadata, shareImage, shortText } from "@/lib/seo";
+import type { Metadata } from "next";
 
 export const revalidate = 120;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const roupa = await prisma.roupa
+    .findUnique({
+      where: { id },
+      select: {
+        ano: true,
+        tema: true,
+        descricao: true,
+        imagemUrl: true,
+        photos: { orderBy: [{ order: "asc" }, { createdAt: "asc" }], take: 1, select: { imageUrl: true } },
+      },
+    })
+    .catch(() => null);
+  if (!roupa) return { title: "Roupa não encontrada" };
+  const tema = tituloAluguerParaAno(roupa.ano, roupa.tema);
+  return pageMetadata({
+    title: `Aluguer de roupa — Marchas ${roupa.ano}`,
+    description: shortText(
+      `${tema}. Alugue a roupa das Marchas Antoninas ${roupa.ano} dos Unidos de Avidos: fotos, preço e disponibilidade.`
+    ),
+    path: `/aluguer-roupas/${id}`,
+    image: shareImage(roupa.photos[0]?.imageUrl ?? roupa.imagemUrl),
+  });
+}
 
 function WhatsappIcon({ className }: { className?: string }) {
   return (

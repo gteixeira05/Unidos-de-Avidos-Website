@@ -10,6 +10,7 @@ import {
   normalizePagamentoEstado,
 } from "@/lib/reservaPagamento";
 import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
+import PerfilDadosPessoais from "@/components/PerfilDadosPessoais";
 
 interface User {
   id: string;
@@ -860,6 +861,8 @@ export default function PerfilPage() {
           <p className="text-sm text-gray-600">Ainda não tem reservas.</p>
         )}
       </div>
+
+      <PerfilDadosPessoais isAdmin={user.role === "ADMIN" || user.role === "SUPER_ADMIN"} />
     </div>
   );
 }

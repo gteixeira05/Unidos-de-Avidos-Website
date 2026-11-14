@@ -1,6 +1,14 @@
 import { Shirt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import AluguerCatalogContent from "@/components/AluguerCatalogContent";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Aluguer de Roupas",
+  description:
+    "Alugue as roupas e fardas das Marchas Antoninas dos Unidos de Avidos. Veja o catálogo, os preços e a disponibilidade.",
+  path: "/aluguer-roupas",
+});
 
 /** Recalcular no servidor a cada 2 min (ISR); visitantes sem sessão podem ser servidos pela CDN. */
 export const revalidate = 120;

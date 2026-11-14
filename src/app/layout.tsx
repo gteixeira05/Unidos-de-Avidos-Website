@@ -6,6 +6,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
 import CookieBanner from "@/components/CookieBanner";
+import { pageMetadata } from "@/lib/seo";
+import { getSiteUrl } from "@/lib/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,9 +20,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Unidos de Avidos",
-  description:
-    "Associação Unidos de Avidos - Marchas Antoninas de Vila Nova de Famalicão desde 2005. Aluguer de roupas e fardas históricas.",
+  metadataBase: new URL(getSiteUrl()),
+  ...pageMetadata({
+    title: "Unidos de Avidos",
+    description:
+      "Associação Unidos de Avidos - Marchas Antoninas de Vila Nova de Famalicão desde 2005. Aluguer de roupas e fardas históricas.",
+    path: "/",
+  }),
+  // Páginas definem só o seu título; o template acrescenta o nome da associação.
+  title: { default: "Unidos de Avidos — Marchas Antoninas de Famalicão", template: "%s | Unidos de Avidos" },
   icons: {
     icon: [{ url: "/icon.png", type: "image/png", sizes: "any" }],
     apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "180x180" }],

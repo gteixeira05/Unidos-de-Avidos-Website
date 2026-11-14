@@ -89,7 +89,7 @@ export default function FaleConnoscoPage() {
         <div className="overflow-hidden rounded-xl border border-gray-200">
           <iframe
             title="Localização - Unidos de Avidos"
-            src="https://www.google.com/maps?q=Av.+Coemndador+Jos%C3%A9+Costa+Oliveira+14&z=17&output=embed"
+            src="https://www.google.com/maps?q=Av.+Comendador+Jos%C3%A9+Costa+Oliveira+14,+Avidos,+Vila+Nova+de+Famalic%C3%A3o&z=17&output=embed"
             className="h-72 w-full border-0"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { MARCHAS_INFO } from "@/lib/marchasAntoninas";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Marchas Antoninas",
+  description:
+    "Todas as participações dos Unidos de Avidos nas Marchas Antoninas de Vila Nova de Famalicão, ano a ano, desde 2005.",
+  path: "/sobre/marchas",
+});
 
 const ANOS_PARTICIPACAO = [
   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2017, 2018,

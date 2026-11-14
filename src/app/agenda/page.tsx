@@ -1,22 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
+import { pageMetadata } from "@/lib/seo";
+import { formatarDataEvento, proximosEventos } from "@/lib/agenda";
+import SemEventos from "@/components/SemEventos";
 
-const eventos = [
-  {
-    titulo: "Festa da Flor",
-    data: "10 de Maio 2026",
-    imagem: "/evento-festa-da-flor.png",
-    descricao: "Celebração da Festa da Flor com a comunidade de Avidos.",
-  },
-  {
-    titulo: "Marchas Antoninas",
-    data: "12 de junho 2026",
-    imagem: "/evento-marchas-antoninas.png",
-    descricao: "Participação nas Marchas Antoninas de Vila Nova de Famalicão.",
-  },
-];
+export const metadata = pageMetadata({
+  title: "Agenda",
+  description:
+    "Próximos eventos da Associação Unidos de Avidos: Festa da Flor, Marchas Antoninas e outras iniciativas.",
+  path: "/agenda",
+});
+
+// Recalcula de hora a hora para os eventos passados saírem sozinhos.
+export const revalidate = 3600;
 
 export default function AgendaPage() {
+  const eventos = proximosEventos();
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-gray-900">Agenda</h1>
@@ -24,10 +23,12 @@ export default function AgendaPage() {
         Consulte os nossos próximos eventos e atividades.
       </p>
 
+      {eventos.length === 0 && <SemEventos />}
+
       <div className="mt-10 space-y-10">
-        {eventos.map((evento, index) => (
+        {eventos.map((evento) => (
           <article
-            key={index}
+            key={evento.slug}
             className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
           >
             <div className="sm:flex">
@@ -41,8 +42,8 @@ export default function AgendaPage() {
                 />
               </div>
               <div className="flex flex-col justify-center p-6">
-                <time className="text-sm font-medium text-[#00923f]">
-                  {evento.data}
+                <time dateTime={evento.data} className="text-sm font-medium text-[#00923f]">
+                  {formatarDataEvento(evento.data)}
                 </time>
                 <h2 className="mt-1 text-xl font-bold text-gray-900">
                   {evento.titulo}

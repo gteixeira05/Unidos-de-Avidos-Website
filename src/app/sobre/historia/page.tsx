@@ -1,3 +1,12 @@
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "História",
+  description:
+    "A história da Associação Unidos de Avidos e da sua participação nas Marchas Antoninas de Vila Nova de Famalicão desde 2005.",
+  path: "/sobre/historia",
+});
+
 export default function HistoriaPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

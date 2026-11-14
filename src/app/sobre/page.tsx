@@ -1,3 +1,12 @@
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Sobre Nós",
+  description:
+    "Conheça a Associação Unidos de Avidos: a sua história, a participação nas Marchas Antoninas e os órgãos sociais.",
+  path: "/sobre",
+});
+
 export default function SobrePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

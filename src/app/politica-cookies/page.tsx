@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Política de cookies | Unidos de Avidos",
+  title: "Política de cookies",
   description:
     "Política de Cookies da Associação Unidos de Avidos, com informação sobre cookies essenciais e tecnologias equivalentes.",
 };

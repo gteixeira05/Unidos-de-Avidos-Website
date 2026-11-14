@@ -1,3 +1,12 @@
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Órgãos Sociais",
+  description:
+    "Direção, Assembleia Geral e Conselho Fiscal da Associação Unidos de Avidos.",
+  path: "/sobre/orgaos-sociais",
+});
+
 export default function OrgaosSociaisPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

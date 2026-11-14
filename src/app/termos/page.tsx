@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Termos e Condições | Unidos de Avidos",
+  title: "Termos e Condições",
   description:
     "Termos e Condições de utilização do website e do serviço de reserva/aluguer da Associação Unidos de Avidos.",
 };
