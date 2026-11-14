@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { MARCHAS_INFO } from "../src/lib/marchasAntoninas";
+import { MARCHAS_INFO } from "./dados/marchas";
 
 const prisma = new PrismaClient();
 

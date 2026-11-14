@@ -10,13 +10,7 @@ import {
   PAGAMENTO_ESTADOS,
   parseMetodoPagamento,
 } from "@/lib/reservaPagamento";
-import {
-  getPrecoCalcadoPorAno,
-  temCalcadoDisponivel,
-  isPosEvento2026,
-  PRECO_CALCADO_POS_EVENTO_2026,
-  PRECO_ARCOS_POS_EVENTO_2026,
-} from "@/lib/aluguerRoupasPublic";
+import { calcularPrecoReserva, SELECT_PRECOS_ROUPA } from "@/lib/aluguerRoupasPublic";
 
 function toUTCDay(d: Date) {
   const s = d.toISOString().split("T")[0]!;
@@ -221,6 +215,7 @@ export async function PATCH(
       custoExtraCalcado: true,
       incluiArcos: true,
       custoExtraArcos: true,
+      precoBase: true,
       pagamentoEstado: true,
       metodoPagamento: true,
       roupa: {
@@ -228,7 +223,7 @@ export async function PATCH(
           id: true,
           ano: true,
           tema: true,
-          precoAluguer: true,
+          ...SELECT_PRECOS_ROUPA,
         },
       },
     },
@@ -282,31 +277,18 @@ export async function PATCH(
         : {}
       : { pagamentoEstado: "POR_PAGAR", metodoPagamento: null as string | null };
 
-  const posEvento = isPosEvento2026(reservaAtual.roupa.ano, dataInicioRaw);
-  const ano2026PreEvento = reservaAtual.roupa.ano === 2026 && !posEvento;
-
-  const calcadoData: { incluiCalcado: boolean; custoExtraCalcado: number } | Record<string, never> =
-    hasIncluiCalcadoInBody
-      ? (() => {
-          const incluir = Boolean(body.incluiCalcado);
-          if (!incluir) return { incluiCalcado: false, custoExtraCalcado: 0 };
-          if (posEvento) return { incluiCalcado: true, custoExtraCalcado: PRECO_CALCADO_POS_EVENTO_2026 };
-          if (ano2026PreEvento) return { incluiCalcado: true, custoExtraCalcado: 0 };
-          if (!temCalcadoDisponivel(reservaAtual.roupa.ano)) return { incluiCalcado: false, custoExtraCalcado: 0 };
-          return { incluiCalcado: true, custoExtraCalcado: getPrecoCalcadoPorAno(reservaAtual.roupa.ano) ?? 0 };
-        })()
-      : {};
-
-  const arcosData: { incluiArcos: boolean; custoExtraArcos: number } | Record<string, never> =
-    hasIncluiArcosInBody
-      ? (() => {
-          const incluir = Boolean(body.incluiArcos);
-          if (!incluir) return { incluiArcos: false, custoExtraArcos: 0 };
-          if (posEvento) return { incluiArcos: true, custoExtraArcos: PRECO_ARCOS_POS_EVENTO_2026 };
-          if (ano2026PreEvento) return { incluiArcos: true, custoExtraArcos: 0 };
-          return { incluiArcos: false, custoExtraArcos: 0 };
-        })()
-      : {};
+  // Recalcula sempre o preço com as datas e extras finais (mudar a data pode mudar o preço).
+  const preco = calcularPrecoReserva(reservaAtual.roupa, dataInicioRaw.slice(0, 10), {
+    calcado: hasIncluiCalcadoInBody ? Boolean(body.incluiCalcado) : reservaAtual.incluiCalcado,
+    arcos: hasIncluiArcosInBody ? Boolean(body.incluiArcos) : reservaAtual.incluiArcos,
+  });
+  const precoData = {
+    precoBase: preco.precoBase,
+    incluiCalcado: preco.incluiCalcado,
+    custoExtraCalcado: preco.custoExtraCalcado,
+    incluiArcos: preco.incluiArcos,
+    custoExtraArcos: preco.custoExtraArcos,
+  };
 
   const eraAprovada = reservaAtual.estado === "APROVADA";
   const ficaAprovada = estado === "APROVADA";
@@ -334,8 +316,7 @@ export async function PATCH(
           email,
           telefone,
           observacoes,
-          ...calcadoData,
-          ...arcosData,
+          ...precoData,
           ...paymentData,
         },
         select: {
@@ -351,10 +332,11 @@ export async function PATCH(
           custoExtraCalcado: true,
           incluiArcos: true,
           custoExtraArcos: true,
+          precoBase: true,
           pagamentoEstado: true,
           metodoPagamento: true,
           user: { select: { id: true, name: true, email: true } },
-          roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
+          roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true, precoCalcado: true, precoArcos: true, arcosDisponiveis: true, precoTudoIncluido: true, tudoIncluidoAte: true } },
         },
       });
 

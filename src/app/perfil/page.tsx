@@ -9,13 +9,15 @@ import {
   labelPagamentoEstado,
   normalizePagamentoEstado,
 } from "@/lib/reservaPagamento";
-import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
+import { formatPrecoAluguerPublico, precoBaseDaReserva } from "@/lib/aluguerRoupasPublic";
 import PerfilDadosPessoais from "@/components/PerfilDadosPessoais";
+import PerfilConta from "@/components/PerfilConta";
 
 interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: string;
   emailNotifContacto?: boolean;
   emailNotifReservas?: boolean;
@@ -41,6 +43,9 @@ type ReservaItem = {
   createdAt: string;
   incluiCalcado?: boolean;
   custoExtraCalcado?: number;
+  incluiArcos?: boolean;
+  custoExtraArcos?: number;
+  precoBase?: number | null;
   pagamentoEstado?: string | null;
   metodoPagamento?: string | null;
   roupa: { id: string; ano: number; tema: string; precoAluguer: number };
@@ -382,12 +387,13 @@ export default function PerfilPage() {
         className="scroll-mt-28 space-y-3 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
       >
         <h2 className="text-lg font-semibold text-[#00923f]">Dados da conta</h2>
-        <p className="text-sm text-gray-700">
-          <span className="font-medium">Nome:</span> {user.name}
-        </p>
-        <p className="text-sm text-gray-700">
-          <span className="font-medium">Email:</span> {user.email}
-        </p>
+        <PerfilConta
+          user={user}
+          onUpdated={(u) => {
+            setUser((prev) => (prev ? { ...prev, ...u } : prev));
+            notifyAuthSessionChanged();
+          }}
+        />
         {user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? (
           <p className="text-sm text-gray-700">
             <span className="font-medium">Tipo de perfil:</span>{" "}
@@ -806,7 +812,7 @@ export default function PerfilPage() {
                   Valor de referência:{" "}
                   <span className="font-medium">
                     {formatPrecoAluguerPublico(
-                      Number(r.roupa.precoAluguer) + Number(r.custoExtraCalcado ?? 0)
+                      precoBaseDaReserva(r) + Number(r.custoExtraCalcado ?? 0) + Number(r.custoExtraArcos ?? 0)
                     )}
                   </span>
                 </p>
@@ -814,10 +820,20 @@ export default function PerfilPage() {
                   Calçado:{" "}
                   <span className="font-medium">
                     {r.incluiCalcado
-                      ? `Sim (+${formatPrecoAluguerPublico(Number(r.custoExtraCalcado ?? 0))})`
+                      ? r.custoExtraCalcado
+                        ? `Sim (+${formatPrecoAluguerPublico(Number(r.custoExtraCalcado))})`
+                        : "Sim (incluído)"
                       : "Não"}
                   </span>
                 </p>
+                {r.incluiArcos ? (
+                  <p className="mt-1 text-sm text-gray-700">
+                    Arcos:{" "}
+                    <span className="font-medium">
+                      {r.custoExtraArcos ? `Sim (+${formatPrecoAluguerPublico(Number(r.custoExtraArcos))})` : "Sim (incluído)"}
+                    </span>
+                  </p>
+                ) : null}
                 {r.estado === "APROVADA" ? (
                   <>
                     <p className="mt-1 text-sm text-gray-700">

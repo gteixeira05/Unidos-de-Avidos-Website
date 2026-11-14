@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import AdminUtilizadores from "@/components/admin/AdminUtilizadores";
 
-export default function AdminUtilizadoresPage() {
-  redirect("/admin?tab=utilizadores");
+export default function Page() {
+  return <AdminUtilizadores />;
 }

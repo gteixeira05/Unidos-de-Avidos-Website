@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { getSiteUrl } from "@/lib/site-url";
-import { MARCHAS_INFO } from "@/lib/marchasAntoninas";
+import { getMarchas } from "@/lib/conteudos";
 
 const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"] }[] = [
   { path: "", priority: 1, changeFrequency: "weekly" },
@@ -28,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority,
   }));
 
-  const marchasAnos = Object.keys(MARCHAS_INFO).map(Number);
+  const marchasAnos = (await getMarchas()).map((m) => m.ano);
   const marchasEntries: MetadataRoute.Sitemap = marchasAnos.map((ano) => ({
     url: `${base}/sobre/marchas/${ano}`,
     changeFrequency: "monthly",

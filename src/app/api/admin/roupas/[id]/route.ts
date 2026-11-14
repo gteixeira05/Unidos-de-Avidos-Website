@@ -3,6 +3,7 @@ import path from "path";
 import { NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { lerPrecosDoBody, SELECT_PRECOS_ROUPA } from "@/lib/aluguerRoupasPublic";
 import { getSessionFromRequest } from "@/lib/auth";
 import { removeStoredMediaAsset } from "@/lib/media/remove-stored-asset";
 import { logAdminAction } from "@/lib/admin-audit";
@@ -36,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       imagemUrl: true,
       conjuntoInclui: true,
       regrasLavagem: true,
-      precoAluguer: true,
+      ...SELECT_PRECOS_ROUPA,
       quantidadeHomem: true,
       quantidadeMulher: true,
     },
@@ -50,6 +51,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return Math.max(0, Math.floor(n));
   }
 
+  const precos = lerPrecosDoBody(body ?? {});
+  if ("error" in precos) return Response.json({ error: precos.error }, { status: 400 });
+
   const patch = {
     ano: body?.ano !== undefined ? Number(body.ano) : undefined,
     descricao: body?.descricao !== undefined ? (body.descricao?.toString() ?? null) : undefined,
@@ -58,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       body?.conjuntoInclui !== undefined ? (body.conjuntoInclui?.toString() ?? null) : undefined,
     regrasLavagem:
       body?.regrasLavagem !== undefined ? (body.regrasLavagem?.toString() ?? null) : undefined,
-    precoAluguer: body?.precoAluguer !== undefined ? Number(body.precoAluguer) : undefined,
+    ...precos.data,
     quantidadeHomem: parseNonNegInt(body?.quantidadeHomem),
     quantidadeMulher: parseNonNegInt(body?.quantidadeMulher),
   };

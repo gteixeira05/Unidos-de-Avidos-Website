@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
-import {
-  formatPrecoAluguerPublico,
-  QUANTIDADE_ARCOS_POR_ANO,
-  temArcosParaAlugar,
-} from "@/lib/aluguerRoupasPublic";
+import { formatPrecoAluguerPublico } from "@/lib/aluguerRoupasPublic";
 
 type Variant = "catalog" | "detail";
 
@@ -117,11 +113,11 @@ function TextoContactoSobConsulta({ className }: { className?: string }) {
 }
 
 export function BlocoStockCriancasArcos({
-  ano,
+  arcosDisponiveis,
   variant,
   omitContactoSobConsulta = false,
 }: {
-  ano: number;
+  arcosDisponiveis?: number | null;
   variant: Variant;
   /** Evita repetir o link quando o bloco pai já explica contacto/sob consulta. */
   omitContactoSobConsulta?: boolean;
@@ -140,11 +136,11 @@ export function BlocoStockCriancasArcos({
         Temos também roupas para crianças; as respetivas quantidades podem ser
         confirmadas ao entrarem em contacto connosco (sob consulta).
       </p>
-      {temArcosParaAlugar(ano) ? (
+      {arcosDisponiveis ? (
         <p
           className={`rounded-lg border border-[#00923f]/20 bg-[#00923f]/[0.06] ${textSize} leading-relaxed text-gray-800 px-3 py-2`}
         >
-          {QUANTIDADE_ARCOS_POR_ANO} arcos disponíveis para aluguer
+          {arcosDisponiveis} arcos disponíveis para aluguer
         </p>
       ) : null}
     </div>
@@ -153,11 +149,11 @@ export function BlocoStockCriancasArcos({
 
 /** Secção completa de stock na página de detalhe. */
 export function StockFardasDetalhe({
-  ano,
+  arcosDisponiveis,
   quantidadeHomem,
   quantidadeMulher,
 }: {
-  ano: number;
+  arcosDisponiveis?: number | null;
   quantidadeHomem: number;
   quantidadeMulher: number;
 }) {
@@ -190,7 +186,7 @@ export function StockFardasDetalhe({
         </div>
       </div>
       <BlocoStockCriancasArcos
-        ano={ano}
+        arcosDisponiveis={arcosDisponiveis}
         variant="detail"
         omitContactoSobConsulta
       />

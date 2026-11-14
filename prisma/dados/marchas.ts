@@ -1,3 +1,4 @@
+// Dados das Marchas que estavam em src/lib/marchasAntoninas.ts — usados só pela migração para a BD.
 export type MarchaClassificacaoItem = {
   pos: string;
   nome: string;
@@ -423,7 +424,8 @@ export const MARCHAS_INFO: Record<number, MarchaAnoInfo> = {
  * Título no catálogo e ficha de aluguer: coincide com Marchas Antoninas quando existe
  * entrada em MARCHAS_INFO; senão usa o tema guardado na roupa (BD).
  */
-export function tituloAluguerParaAno(ano: number, temaRoupa: string): string {
-  const oficial = MARCHAS_INFO[ano]?.tema?.trim();
-  return oficial || temaRoupa;
-}
+
+/** Anos em que a associação participou (listados na página das Marchas, mesmo sem informação). */
+export const ANOS_PARTICIPACAO = [
+  2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2019, 2024, 2025, 2026,
+];

@@ -79,8 +79,11 @@ export async function PATCH(
       observacoes: true,
       incluiCalcado: true,
       custoExtraCalcado: true,
+      incluiArcos: true,
+      custoExtraArcos: true,
+      precoBase: true,
       user: { select: { id: true, name: true, email: true } },
-      roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
+      roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true, precoCalcado: true, precoArcos: true, arcosDisponiveis: true, precoTudoIncluido: true, tudoIncluidoAte: true } },
     },
   });
 

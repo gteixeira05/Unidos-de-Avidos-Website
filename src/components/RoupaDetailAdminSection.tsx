@@ -3,6 +3,7 @@
 import AdminRoupaInlineEditor from "@/components/admin/AdminRoupaInlineEditor";
 import AdminRoupaFotosManager from "@/components/admin/AdminRoupaFotosManager";
 import { useResolvedAdmin } from "@/hooks/useResolvedAdmin";
+import type { PrecosRoupa } from "@/lib/aluguerRoupasPublic";
 
 type RoupaEditorPayload = {
   id: string;
@@ -11,10 +12,9 @@ type RoupaEditorPayload = {
   descricao: string | null;
   conjuntoInclui: string | null;
   regrasLavagem: string | null;
-  precoAluguer: number;
   quantidadeHomem: number;
   quantidadeMulher: number;
-};
+} & PrecosRoupa;
 
 export default function RoupaDetailAdminSection({
   roupaId,

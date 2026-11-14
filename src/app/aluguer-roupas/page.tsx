@@ -2,6 +2,8 @@ import { Shirt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import AluguerCatalogContent from "@/components/AluguerCatalogContent";
 import { pageMetadata } from "@/lib/seo";
+import { precoReferencia } from "@/lib/aluguerRoupasPublic";
+import { getMarchas, tituloAluguer } from "@/lib/conteudos";
 
 export const metadata = pageMetadata({
   title: "Aluguer de Roupas",
@@ -14,9 +16,10 @@ export const metadata = pageMetadata({
 export const revalidate = 120;
 
 export default async function AluguerRoupasPage() {
-  const roupas = await prisma.roupa.findMany({
-    orderBy: { ano: "desc" },
-  });
+  const [roupas, marchas] = await Promise.all([
+    prisma.roupa.findMany({ orderBy: { ano: "desc" } }),
+    getMarchas(),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -38,7 +41,14 @@ export default async function AluguerRoupasPage() {
         </p>
       </div>
 
-      <AluguerCatalogContent roupas={roupas} serverIsAdmin={false} />
+      <AluguerCatalogContent
+        roupas={roupas.map((r) => ({
+          ...r,
+          titulo: tituloAluguer(marchas, r.ano, r.tema),
+          precoAtual: precoReferencia(r),
+        }))}
+        serverIsAdmin={false}
+      />
 
       {roupas.length === 0 && (
         <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">

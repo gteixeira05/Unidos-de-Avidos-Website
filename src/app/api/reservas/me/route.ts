@@ -20,9 +20,12 @@ export async function GET(req: NextRequest) {
       createdAt: true,
       incluiCalcado: true,
       custoExtraCalcado: true,
+      incluiArcos: true,
+      custoExtraArcos: true,
+      precoBase: true,
       pagamentoEstado: true,
       metodoPagamento: true,
-      roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
+      roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true, precoCalcado: true, precoArcos: true, arcosDisponiveis: true, precoTudoIncluido: true, tudoIncluidoAte: true } },
     },
   });
 

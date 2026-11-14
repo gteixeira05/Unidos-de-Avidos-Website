@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
         id: string;
         name: string;
         email: string;
+        phone: string | null;
         role: string;
         emailNotifContacto: boolean;
         emailNotifReservas: boolean;
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         emailNotifContacto: true,
         emailNotifReservas: true,
@@ -64,6 +66,7 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         emailNotifContacto: true,
         emailNotifReservas: true,
@@ -141,6 +144,7 @@ export async function PATCH(req: NextRequest) {
         id: string;
         name: string;
         email: string;
+        phone: string | null;
         role: string;
         emailNotifContacto: boolean;
         emailNotifReservas: boolean;
@@ -159,6 +163,7 @@ export async function PATCH(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         emailNotifContacto: true,
         emailNotifReservas: true,
@@ -187,6 +192,7 @@ export async function PATCH(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         emailNotifContacto: true,
         emailNotifReservas: true,

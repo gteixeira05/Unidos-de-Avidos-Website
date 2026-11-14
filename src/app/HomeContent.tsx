@@ -138,15 +138,17 @@ export default function HomeContent({ eventosFuturos }: { eventosFuturos: Evento
               key={evento.slug}
               className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
             >
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-                <Image
-                  src={evento.imagem}
-                  alt={evento.titulo}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                />
-              </div>
+              {evento.imagem && (
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                  <Image
+                    src={evento.imagem}
+                    alt={evento.titulo}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 50vw"
+                  />
+                </div>
+              )}
               <div className="p-5">
                 <h3 className="text-xl font-bold text-gray-900">{evento.titulo}</h3>
                 <p className="mt-1 flex items-center gap-2 text-sm text-gray-600">
@@ -156,6 +158,25 @@ export default function HomeContent({ eventosFuturos }: { eventosFuturos: Evento
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      {/* Moldura para as fotos de perfil */}
+      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-start gap-4 rounded-2xl border border-[#00923f]/20 bg-[#00923f]/[0.06] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-[#00923f]">Mostre o seu apoio</p>
+            <h2 className="mt-1 text-2xl font-bold text-gray-900">Moldura das Marchas para a sua foto</h2>
+            <p className="mt-2 text-gray-600">
+              Adicione a moldura oficial dos Unidos de Avidos à sua foto e use-a nas redes sociais.
+            </p>
+          </div>
+          <Link
+            href="/moldura"
+            className="shrink-0 rounded-lg bg-[#00923f] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-[#007a33]"
+          >
+            Criar a minha foto
+          </Link>
         </div>
       </section>
 

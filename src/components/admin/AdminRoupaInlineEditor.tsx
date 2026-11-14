@@ -1,5 +1,8 @@
 "use client";
 
+import CamposPrecoRoupa, { formParaPrecos, precosParaForm, type PrecosForm } from "@/components/admin/CamposPrecoRoupa";
+import type { PrecosRoupa } from "@/lib/aluguerRoupasPublic";
+
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -16,10 +19,9 @@ type Props = {
     descricao?: string | null;
     conjuntoInclui?: string | null;
     regrasLavagem?: string | null;
-    precoAluguer: number;
     quantidadeHomem: number;
     quantidadeMulher: number;
-  };
+  } & PrecosRoupa;
 };
 
 const ESTADOS_DISP = ["LIVRE", "ALUGADA", "MANUTENCAO"] as const;
@@ -131,8 +133,8 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
     descricao: roupa.descricao ?? "",
     conjuntoInclui: roupa.conjuntoInclui ?? "",
     regrasLavagem: roupa.regrasLavagem ?? "",
-    precoAluguer: String(roupa.precoAluguer),
   });
+  const [precos, setPrecos] = useState<PrecosForm>(() => precosParaForm(roupa));
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
@@ -324,7 +326,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
             descricao: form.descricao,
             conjuntoInclui: form.conjuntoInclui,
             regrasLavagem: form.regrasLavagem,
-            precoAluguer: Number(form.precoAluguer),
+            ...formParaPrecos(precos),
           }),
         });
         const data = await res.json();
@@ -515,7 +517,7 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
     <div className="mt-6 min-w-0 max-w-full rounded-xl border border-[#00923f]/20 bg-[#00923f]/5 p-4 sm:p-6">
       <h3 className="text-lg font-semibold text-[#00923f]">Modo Admin</h3>
 
-      <div className="mt-4 grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-4 grid min-w-0 grid-cols-1 gap-6 2xl:grid-cols-2">
         {/* Form: editar roupa */}
         <form
           onSubmit={onSubmitSaveRoupa}
@@ -534,15 +536,10 @@ export default function AdminRoupaInlineEditor({ roupa }: Props) {
                 onChange={(e) => setForm({ ...form, ano: e.target.value })}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Preço (€)</label>
-              <input
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base"
-                value={form.precoAluguer}
-                onChange={(e) => setForm({ ...form, precoAluguer: e.target.value })}
-              />
-            </div>
+
           </div>
+
+          <CamposPrecoRoupa value={precos} onChange={setPrecos} idPrefix={`roupa-${roupa.id}`} />
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Descrição</label>

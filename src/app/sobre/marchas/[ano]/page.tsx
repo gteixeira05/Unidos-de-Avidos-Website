@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MARCHAS_INFO } from "@/lib/marchasAntoninas";
+import { getMarcha } from "@/lib/conteudos";
 import { Play } from "lucide-react";
 import { pageMetadata, shortText } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -10,7 +10,7 @@ export async function generateMetadata({
   params: Promise<{ ano: string }>;
 }): Promise<Metadata> {
   const { ano } = await params;
-  const info = MARCHAS_INFO[Number(ano)];
+  const info = await getMarcha(Number(ano));
   return pageMetadata({
     title: `Marchas Antoninas ${ano}`,
     description:
@@ -19,6 +19,8 @@ export async function generateMetadata({
     path: `/sobre/marchas/${ano}`,
   });
 }
+
+export const revalidate = 3600;
 
 export default async function MarchaAnoPage({
   params,
@@ -45,9 +47,9 @@ export default async function MarchaAnoPage({
     );
   }
 
-  const info = MARCHAS_INFO[ano];
+  const info = await getMarcha(ano);
   const actuacaoUrl = info?.youtubeUrl;
-  // Só usar tema de MARCHAS_INFO (fonte oficial); não usar roupa.tema para não mostrar temas aleatórios
+  // Só usar o tema da Marcha (fonte oficial); não usar roupa.tema para não mostrar temas aleatórios
   const temaResolvido = info?.tema?.trim() || null;
 
   return (

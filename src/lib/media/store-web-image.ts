@@ -7,7 +7,8 @@ import { isCloudinaryConfigured, uploadImageBufferToCloudinary } from "./cloudin
 export type StoreWebImageTarget =
   | { kind: "gallery"; ano: number; filename: string }
   | { kind: "gallery-cover"; ano: number }
-  | { kind: "roupa"; roupaId: string; filename: string };
+  | { kind: "roupa"; roupaId: string; filename: string }
+  | { kind: "conteudo"; filename: string };
 
 export type StoreWebImageResult = { url: string; storage: "local" | "cloudinary" };
 
@@ -36,6 +37,10 @@ export async function storeProcessedWebImage(
       folder = `${prefix}/galeria/${target.ano}`;
       publicId = "cover";
       overwrite = true;
+    } else if (target.kind === "conteudo") {
+      folder = `${prefix}/conteudos`;
+      publicId = target.filename.replace(/\.[^.]+$/, "");
+      overwrite = false;
     } else {
       folder = `${prefix}/roupas/${target.roupaId}`;
       publicId = target.filename.replace(/\.[^.]+$/, "");
@@ -66,6 +71,13 @@ export async function storeProcessedWebImage(
     const filepath = path.join(dir, filename);
     await writeFile(filepath, buffer);
     return { url: `/galeria/${target.ano}/${filename}`, storage: "local" };
+  }
+
+  if (target.kind === "conteudo") {
+    const dir = path.join(process.cwd(), "public", "conteudos");
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, target.filename), buffer);
+    return { url: `/conteudos/${target.filename}`, storage: "local" };
   }
 
   const dir = path.join(process.cwd(), "public", "roupas", target.roupaId);

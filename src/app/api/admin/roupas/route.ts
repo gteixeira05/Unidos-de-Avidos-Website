@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { lerPrecosDoBody } from "@/lib/aluguerRoupasPublic";
 import { getSessionFromRequest } from "@/lib/auth";
 import { logAdminAction } from "@/lib/admin-audit";
 
@@ -28,6 +29,8 @@ export async function POST(req: NextRequest) {
   if (!Number.isFinite(ano) || !tema || !Number.isFinite(precoAluguer)) {
     return Response.json({ error: "Campos inválidos (ano, tema, precoAluguer)." }, { status: 400 });
   }
+  const precos = lerPrecosDoBody(body ?? {});
+  if ("error" in precos) return Response.json({ error: precos.error }, { status: 400 });
 
   const qh = Number(body?.quantidadeHomem);
   const qm = Number(body?.quantidadeMulher);
@@ -44,6 +47,7 @@ export async function POST(req: NextRequest) {
       quantidadeMulher,
       conjuntoInclui: body?.conjuntoInclui?.toString() ?? null,
       regrasLavagem: body?.regrasLavagem?.toString() ?? null,
+      ...precos.data,
       precoAluguer,
     },
   });

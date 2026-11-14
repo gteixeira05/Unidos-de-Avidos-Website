@@ -17,8 +17,12 @@ type Props = {
   adminFooter?: (photo: GaleriaAlbumPhoto) => ReactNode;
 };
 
+// Mostra as fotos aos poucos: um álbum com 150 fotos não envia 150 imagens no HTML inicial.
+const FOTOS_POR_PAGINA = 24;
+
 export default function GaleriaAlbumGrid({ ano, photos, adminFooter }: Props) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [visiveis, setVisiveis] = useState(FOTOS_POR_PAGINA);
   const touchStartX = useRef<number | null>(null);
   const suppressNextClick = useRef(false);
 
@@ -188,7 +192,7 @@ export default function GaleriaAlbumGrid({ ano, photos, adminFooter }: Props) {
         </span>
       </p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {photos.map((p, i) => (
+        {photos.slice(0, visiveis).map((p, i) => (
           <article
             key={p.id}
             className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
@@ -232,6 +236,20 @@ export default function GaleriaAlbumGrid({ ano, photos, adminFooter }: Props) {
           </article>
         ))}
       </div>
+      {visiveis < count && (
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setVisiveis((v) => v + FOTOS_POR_PAGINA)}
+            className="rounded-lg border border-[#00923f] px-5 py-2.5 text-sm font-semibold text-[#00923f] transition hover:bg-[#00923f] hover:text-white"
+          >
+            Mostrar mais fotos
+          </button>
+          <p className="text-xs text-gray-500">
+            {visiveis} de {count} fotos
+          </p>
+        </div>
+      )}
       {lightbox}
     </>
   );

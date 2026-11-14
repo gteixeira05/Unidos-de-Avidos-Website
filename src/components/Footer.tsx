@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getContactos, telHref, whatsappUrl } from "@/lib/conteudos";
 import {
   Facebook,
   Instagram,
@@ -13,7 +14,8 @@ import {
 const DESENVOLVEDOR_LINKEDIN =
   "https://www.linkedin.com/in/gon%C3%A7alo-teixeira-ab2763205/";
 
-export default function Footer() {
+export default async function Footer() {
+  const c = await getContactos();
   return (
     <footer className="border-t border-gray-200 bg-white text-gray-700">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -26,36 +28,31 @@ export default function Footer() {
             <p className="flex items-start gap-3 text-sm text-gray-700">
               <MapPin size={18} className="mt-0.5 text-[#00923f]" />
               <span>
-                N204-5, 4770-778
-                <br />
-                Avidos, Vila Nova de Famalicão
+                {c.morada.map((linha, i) => (
+                  <span key={i} className="block">
+                    {linha}
+                  </span>
+                ))}
               </span>
             </p>
             <p className="flex items-center gap-3 text-sm text-gray-700">
               <IdCard size={18} className="text-[#00923f]" />
-              <span className="font-medium text-gray-900">NIF:</span> 508195551
+              <span className="font-medium text-gray-900">NIF:</span> {c.nif}
             </p>
             <p className="flex items-center gap-3 text-sm text-gray-700">
               <Mail size={18} className="text-[#00923f]" />
-              <a
-                href="mailto:unidosdeavidos@gmail.com"
-                className="hover:text-[#00923f]"
-              >
-                unidosdeavidos@gmail.com
+              <a href={`mailto:${c.email}`} className="hover:text-[#00923f]">
+                {c.email}
               </a>
             </p>
-            <p className="flex items-center gap-3 text-sm text-gray-700">
-              <Phone size={18} className="text-[#00923f]" />
-              <a href="tel:+351914884537" className="hover:text-[#00923f]">
-                +351 914 884 537
-              </a>
-            </p>
-            <p className="flex items-center gap-3 text-sm text-gray-700">
-              <Phone size={18} className="text-[#00923f]" />
-              <a href="tel:+351914838942" className="hover:text-[#00923f]">
-                +351 914 838 942
-              </a>
-            </p>
+            {c.telefones.map((t) => (
+              <p key={t} className="flex items-center gap-3 text-sm text-gray-700">
+                <Phone size={18} className="text-[#00923f]" />
+                <a href={telHref(t)} className="hover:text-[#00923f]">
+                  +351 {t}
+                </a>
+              </p>
+            ))}
           </div>
 
           {/* Páginas */}
@@ -81,6 +78,9 @@ export default function Footer() {
               </Link>
               <Link href="/aluguer-roupas" className="hover:text-[#00923f]">
                 Aluguer de Roupas
+              </Link>
+              <Link href="/moldura" className="hover:text-[#00923f]">
+                Moldura para fotos
               </Link>
               <Link href="/socio" className="hover:text-[#00923f]">
                 Sócio
@@ -115,24 +115,31 @@ export default function Footer() {
               Siga-nos
             </h3>
             <div className="flex items-center gap-4">
+              {c.facebook && (
+                <Link
+                  href={c.facebook}
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-[#00923f] hover:text-[#00923f]"
+                >
+                  <Facebook size={18} />
+                </Link>
+              )}
+              {c.instagram && (
+                <Link
+                  href={c.instagram}
+                  aria-label="Instagram"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-[#00923f] hover:text-[#00923f]"
+                >
+                  <Instagram size={18} />
+                </Link>
+              )}
               <Link
-                href="https://www.facebook.com/profile.php?id=61556449640291"
-                target="_blank"
-                rel="noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-[#00923f] hover:text-[#00923f]"
-              >
-                <Facebook size={18} />
-              </Link>
-              <Link
-                href="https://www.instagram.com/unidosdeavidos/"
-                target="_blank"
-                rel="noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-[#00923f] hover:text-[#00923f]"
-              >
-                <Instagram size={18} />
-              </Link>
-              <Link
-                href="https://wa.me/351914838942"
+                href={whatsappUrl(c.whatsapp)}
+                aria-label="WhatsApp"
                 target="_blank"
                 rel="noreferrer"
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-[#00923f] hover:text-[#00923f]"

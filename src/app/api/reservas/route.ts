@@ -7,15 +7,7 @@ import {
   getAdminTeamForReservaNotify,
 } from "@/lib/admin-notify-recipients";
 import { consumeRateLimit, escapeHtml, getClientIp, normalizeEmail } from "@/lib/security";
-import {
-  formatPrecoAluguerPublico,
-  getPrecoCalcadoPorAno,
-  temCalcadoDisponivel,
-  isPosEvento2026,
-  PRECO_BASE_POS_EVENTO_2026,
-  PRECO_CALCADO_POS_EVENTO_2026,
-  PRECO_ARCOS_POS_EVENTO_2026,
-} from "@/lib/aluguerRoupasPublic";
+import { calcularPrecoReserva, formatPrecoAluguerPublico, temCalcado } from "@/lib/aluguerRoupasPublic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,37 +73,20 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Intervalo de datas inválido." }, { status: 400 });
     }
 
-    const posEvento = isPosEvento2026(roupa.ano, dataInicio);
-
-    // Pré-2027 na roupa de 2026: preço fixo de 2000€, tudo incluído, sem extras
-    // Pós-2027 na roupa de 2026: base 1600€ + calçado e arcos opcionais
-    // Outros anos: preços normais com calçado se disponível
-    let querCalcado = Boolean(incluiCalcado);
-    let querArcos = Boolean(incluiArcos);
-    let custoExtraCalcado = 0;
-    let custoExtraArcos = 0;
-    let precoBaseReserva = roupa.precoAluguer;
-
-    if (posEvento) {
-      precoBaseReserva = PRECO_BASE_POS_EVENTO_2026;
-      if (querCalcado) custoExtraCalcado = PRECO_CALCADO_POS_EVENTO_2026;
-      if (querArcos) custoExtraArcos = PRECO_ARCOS_POS_EVENTO_2026;
-    } else if (roupa.ano === 2026) {
-      // Pré-2027: preço fixo 2000€, ignorar extras
-      querCalcado = false;
-      querArcos = false;
-    } else {
-      querArcos = false;
-      if (querCalcado) {
-        if (!temCalcadoDisponivel(roupa.ano)) {
-          return Response.json(
-            { error: "Para este ano não há calçado disponível para aluguer." },
-            { status: 400 }
-          );
-        }
-        custoExtraCalcado = getPrecoCalcadoPorAno(roupa.ano) ?? 0;
-      }
+    if (incluiCalcado && !temCalcado(roupa)) {
+      return Response.json(
+        { error: "Para este ano não há calçado disponível para aluguer." },
+        { status: 400 }
+      );
     }
+    const preco = calcularPrecoReserva(roupa, String(dataInicio).slice(0, 10), {
+      calcado: Boolean(incluiCalcado),
+      arcos: Boolean(incluiArcos),
+    });
+    const querCalcado = preco.incluiCalcado;
+    const querArcos = preco.incluiArcos;
+    const { custoExtraCalcado, custoExtraArcos } = preco;
+    const precoBaseReserva = preco.precoBase;
 
     const [ocupacaoCalendario, reservaSobreposta] = await Promise.all([
       prisma.disponibilidade.findFirst({
@@ -156,6 +131,7 @@ export async function POST(request: NextRequest) {
         custoExtraCalcado,
         incluiArcos: querArcos,
         custoExtraArcos,
+        precoBase: precoBaseReserva,
       },
     });
 
@@ -202,8 +178,8 @@ export async function POST(request: NextRequest) {
               <p><strong>Roupa:</strong> ${roupaTemaSafe} (${roupa.ano})</p>
               <p><strong>Período:</strong> ${inicio} → ${fim}</p>
               <p><strong>Preço de referência (aluguer anual):</strong> ${precoRef}</p>
-              <p><strong>Calçado:</strong> ${querCalcado ? `Sim (+${precoCalcadoFmt})` : "Não"}</p>
-              <p><strong>Arcos:</strong> ${querArcos ? `Sim (+${precoArcosFmt})` : "Não"}</p>
+              <p><strong>Calçado:</strong> ${querCalcado ? (custoExtraCalcado ? `Sim (+${precoCalcadoFmt})` : "Sim (incluído)") : "Não"}</p>
+              <p><strong>Arcos:</strong> ${querArcos ? (custoExtraArcos ? `Sim (+${precoArcosFmt})` : "Sim (incluído)") : "Não"}</p>
               <p><strong>Total de referência:</strong> ${totalFmt}</p>
               <p><a href="${process.env.APP_URL ?? ""}/admin/reservas">Abrir painel de reservas</a></p>
             </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import AdminTitulo from "@/components/admin/AdminTitulo";
+
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import GaleriaSetCoverButton from "@/components/admin/GaleriaSetCoverButton";
@@ -180,7 +182,7 @@ export default function AdminGaleriaAnoPage({ params }: { params: { ano: string 
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="min-w-0">
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href="/admin/galeria"
@@ -189,8 +191,9 @@ export default function AdminGaleriaAnoPage({ params }: { params: { ano: string 
           ← Voltar à galeria
         </Link>
       </div>
-      <h1 className="mt-4 text-3xl font-bold text-gray-900">Admin · Galeria {ano}</h1>
-      <p className="mt-4 text-lg text-gray-600">Gerir capa e fotos deste ano.</p>
+      <div className="mt-4">
+        <AdminTitulo titulo={`Galeria ${ano}`} descricao="Gerir capa e fotos deste ano." />
+      </div>
 
       <div className="mt-6 rounded-xl border border-[#00923f]/20 bg-[#00923f]/5 p-4">
         <p className="text-sm font-semibold text-[#00923f]">Foto de capa (lista galeria)</p>

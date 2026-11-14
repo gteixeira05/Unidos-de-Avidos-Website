@@ -5,9 +5,9 @@ import CalendarioDisponibilidade from "./CalendarioDisponibilidade";
 import FormularioReserva from "./FormularioReserva";
 import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
-import { tituloAluguerParaAno } from "@/lib/marchasAntoninas";
+import { getContactos, getMarchas, tituloAluguer, whatsappUrl } from "@/lib/conteudos";
 import { PrecoAluguerRoupa, StockFardasDetalhe, PoliticaCaucao } from "@/components/AluguerRoupasInfoPublic";
-import { temCalcadoDisponivel } from "@/lib/aluguerRoupasPublic";
+import { precoReferencia, temCalcado } from "@/lib/aluguerRoupasPublic";
 import { pageMetadata, shareImage, shortText } from "@/lib/seo";
 import type { Metadata } from "next";
 
@@ -32,7 +32,7 @@ export async function generateMetadata({
     })
     .catch(() => null);
   if (!roupa) return { title: "Roupa não encontrada" };
-  const tema = tituloAluguerParaAno(roupa.ano, roupa.tema);
+  const tema = tituloAluguer(await getMarchas(), roupa.ano, roupa.tema);
   return pageMetadata({
     title: `Aluguer de roupa — Marchas ${roupa.ano}`,
     description: shortText(
@@ -74,7 +74,8 @@ export default async function RoupaDetalhePage({
     notFound();
   }
 
-  const tituloExibicao = tituloAluguerParaAno(roupa.ano, roupa.tema);
+  const [marchas, contactos] = await Promise.all([getMarchas(), getContactos()]);
+  const tituloExibicao = tituloAluguer(marchas, roupa.ano, roupa.tema);
 
   const galeriaPhotos =
     roupa.photos.length > 0
@@ -99,7 +100,7 @@ export default async function RoupaDetalhePage({
             <span className="text-sm font-medium text-[#00923f]">
               Ano {roupa.ano}
             </span>
-            {temCalcadoDisponivel(roupa.ano) ? (
+            {temCalcado(roupa) ? (
               <p className="mt-3 flex w-fit rounded-full border border-[#00923f]/20 bg-[#00923f]/10 px-2.5 py-1 text-xs font-semibold text-[#007a33]">
                 Calçado disponível
               </p>
@@ -135,14 +136,14 @@ export default async function RoupaDetalhePage({
               )}
 
               <StockFardasDetalhe
-                ano={roupa.ano}
+                arcosDisponiveis={roupa.arcosDisponiveis}
                 quantidadeHomem={roupa.quantidadeHomem}
                 quantidadeMulher={roupa.quantidadeMulher}
               />
             </div>
 
             <p className="mt-6 text-xl font-bold text-[#00923f]">
-              <PrecoAluguerRoupa precoAluguer={roupa.precoAluguer} />
+              <PrecoAluguerRoupa precoAluguer={precoReferencia(roupa)} />
             </p>
 
             <div className="mt-3 space-y-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-gray-600">
@@ -153,7 +154,7 @@ export default async function RoupaDetalhePage({
             <PoliticaCaucao className="mt-3" />
 
             <a
-              href={`https://wa.me/351914838942?text=${encodeURIComponent(`Quero saber mais informações acerca da roupa de ${roupa.ano}!`)}`}
+              href={whatsappUrl(contactos.whatsapp, `Quero saber mais informações acerca da roupa de ${roupa.ano}!`)}
               target="_blank"
               rel="noreferrer"
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-3 font-medium text-white transition-colors hover:bg-[#20BD5A]"
@@ -193,6 +194,11 @@ export default async function RoupaDetalhePage({
               conjuntoInclui: roupa.conjuntoInclui,
               regrasLavagem: roupa.regrasLavagem,
               precoAluguer: roupa.precoAluguer,
+              precoCalcado: roupa.precoCalcado,
+              precoArcos: roupa.precoArcos,
+              arcosDisponiveis: roupa.arcosDisponiveis,
+              precoTudoIncluido: roupa.precoTudoIncluido,
+              tudoIncluidoAte: roupa.tudoIncluidoAte?.toISOString() ?? null,
               quantidadeHomem: roupa.quantidadeHomem,
               quantidadeMulher: roupa.quantidadeMulher,
             }}
@@ -205,6 +211,10 @@ export default async function RoupaDetalhePage({
               ano: roupa.ano,
               tema: tituloExibicao,
               precoAluguer: roupa.precoAluguer,
+              precoCalcado: roupa.precoCalcado,
+              precoArcos: roupa.precoArcos,
+              precoTudoIncluido: roupa.precoTudoIncluido,
+              tudoIncluidoAte: roupa.tudoIncluidoAte?.toISOString() ?? null,
             }}
           />
         </div>

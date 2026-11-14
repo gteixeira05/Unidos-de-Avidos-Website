@@ -2,7 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 import { formatarDataEvento, proximosEventos } from "@/lib/agenda";
+import { getEventos } from "@/lib/conteudos";
 import SemEventos from "@/components/SemEventos";
+import JsonLd from "@/components/JsonLd";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata = pageMetadata({
   title: "Agenda",
@@ -14,8 +17,8 @@ export const metadata = pageMetadata({
 // Recalcula de hora a hora para os eventos passados saírem sozinhos.
 export const revalidate = 3600;
 
-export default function AgendaPage() {
-  const eventos = proximosEventos();
+export default async function AgendaPage() {
+  const eventos = proximosEventos(await getEventos());
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-gray-900">Agenda</h1>
@@ -23,6 +26,23 @@ export default function AgendaPage() {
         Consulte os nossos próximos eventos e atividades.
       </p>
 
+      {eventos.map((e) => (
+        <JsonLd
+          key={e.slug}
+          data={{
+            "@context": "https://schema.org",
+            "@type": "Event",
+            name: e.titulo,
+            startDate: e.data,
+            description: e.descricao || undefined,
+            image: e.imagem ? new URL(e.imagem, getSiteUrl()).toString() : undefined,
+            eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+            eventStatus: "https://schema.org/EventScheduled",
+            location: { "@type": "Place", name: "Avidos, Vila Nova de Famalicão", address: "Vila Nova de Famalicão, Portugal" },
+            organizer: { "@type": "Organization", name: "Associação Unidos de Avidos", url: getSiteUrl() },
+          }}
+        />
+      ))}
       {eventos.length === 0 && <SemEventos />}
 
       <div className="mt-10 space-y-10">
@@ -32,15 +52,17 @@ export default function AgendaPage() {
             className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
           >
             <div className="sm:flex">
-              <div className="relative h-56 w-full shrink-0 sm:h-64 sm:w-80">
-                <Image
-                  src={evento.imagem}
-                  alt={evento.titulo}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 320px"
-                />
-              </div>
+              {evento.imagem && (
+                <div className="relative h-56 w-full shrink-0 sm:h-64 sm:w-80">
+                  <Image
+                    src={evento.imagem}
+                    alt={evento.titulo}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 320px"
+                  />
+                </div>
+              )}
               <div className="flex flex-col justify-center p-6">
                 <time dateTime={evento.data} className="text-sm font-medium text-[#00923f]">
                   {formatarDataEvento(evento.data)}

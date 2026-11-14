@@ -1,5 +1,7 @@
 "use client";
 
+import AdminTitulo from "@/components/admin/AdminTitulo";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { GALLERY_FILE_INPUT_ACCEPT } from "@/lib/gallery-images";
@@ -170,11 +172,8 @@ export default function AdminGaleriaPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-gray-900">Admin · Galeria</h1>
-      <p className="mt-4 text-lg text-gray-600">
-        Criar álbuns por ano e gerir fotos (upload da galeria do dispositivo).
-      </p>
+    <div className="min-w-0">
+      <AdminTitulo titulo="Galeria" descricao="Criar álbuns por ano e gerir fotos (upload da galeria do dispositivo)." />
 
       {error ? (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

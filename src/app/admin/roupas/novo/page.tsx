@@ -1,14 +1,17 @@
 "use client";
 
+import AdminTitulo from "@/components/admin/AdminTitulo";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import CamposPrecoRoupa, { formParaPrecos, precosParaForm, type PrecosForm } from "@/components/admin/CamposPrecoRoupa";
 
 export default function AdminNovaRoupaPage() {
   const router = useRouter();
   const [ano, setAno] = useState("");
   const [tema, setTema] = useState("");
   const [descricao, setDescricao] = useState("");
-  const [preco, setPreco] = useState("");
+  const [precos, setPrecos] = useState<PrecosForm>(() => precosParaForm({}));
   const [quantidadeHomem, setQuantidadeHomem] = useState("0");
   const [quantidadeMulher, setQuantidadeMulher] = useState("0");
   const [loading, setLoading] = useState(false);
@@ -26,7 +29,7 @@ export default function AdminNovaRoupaPage() {
           ano,
           tema,
           descricao,
-          precoAluguer: preco,
+          ...formParaPrecos(precos),
           quantidadeHomem,
           quantidadeMulher,
         }),
@@ -42,9 +45,8 @@ export default function AdminNovaRoupaPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-gray-900">Admin · Nova roupa</h1>
-      <p className="mt-4 text-gray-600">Criar uma nova roupa para aluguer.</p>
+    <div className="max-w-2xl">
+      <AdminTitulo titulo="Nova roupa" descricao="Criar uma roupa para aluguer. Fotos e disponibilidade gerem-se depois de a criar." />
 
       {error ? (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -63,16 +65,10 @@ export default function AdminNovaRoupaPage() {
               required
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Preço (€)</label>
-            <input
-              value={preco}
-              onChange={(e) => setPreco(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              required
-            />
-          </div>
+
         </div>
+
+        <CamposPrecoRoupa value={precos} onChange={setPrecos} idPrefix="nova-roupa" />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

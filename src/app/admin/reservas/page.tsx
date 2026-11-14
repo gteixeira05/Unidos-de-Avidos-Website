@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import AdminPainel from "@/components/admin/AdminPainel";
 
-export default function AdminReservasPage() {
-  redirect("/admin?tab=reservas");
+export default function Page() {
+  return <AdminPainel tab="reservas" />;
 }

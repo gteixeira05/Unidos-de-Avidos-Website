@@ -70,6 +70,7 @@ export async function PATCH(
       custoExtraCalcado: true,
       incluiArcos: true,
       custoExtraArcos: true,
+      precoBase: true,
       pagamentoEstado: true,
       metodoPagamento: true,
       caucaoPaga: true,
@@ -78,7 +79,7 @@ export async function PATCH(
       arquivada: true,
       createdAt: true,
       user: { select: { id: true, name: true, email: true } },
-      roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true } },
+      roupa: { select: { id: true, ano: true, tema: true, precoAluguer: true, precoCalcado: true, precoArcos: true, arcosDisponiveis: true, precoTudoIncluido: true, tudoIncluidoAte: true } },
     },
   });
 

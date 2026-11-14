@@ -55,6 +55,11 @@ model Roupa {
   conjuntoInclui    String?  // O que o conjunto inclui (texto)
   regrasLavagem     String?  // Regras de lavagem/estado
   precoAluguer      Float    // Preço fixo de aluguer em euros
+  precoCalcado      Float?   // Acréscimo do calçado (null = sem calçado)
+  precoArcos        Float?   // Acréscimo dos arcos (null = não se alugam à parte)
+  arcosDisponiveis  Int?     // Arcos em stock (informativo)
+  precoTudoIncluido Float?   // Preço fixo com tudo incluído para reservas que começam antes de tudoIncluidoAte
+  tudoIncluidoAte   DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   disponibilidades  Disponibilidade[]
@@ -106,6 +111,7 @@ model Reserva {
   custoExtraCalcado Float @default(0)
   incluiArcos Boolean @default(false)
   custoExtraArcos Float @default(0)
+  precoBase   Float?   // Preço base no momento da reserva (null nas reservas antigas)
   // Pagamento (relevante sobretudo para reservas APROVADA / alugadas)
   pagamentoEstado String @default("POR_PAGAR") // POR_PAGAR | PAGO
   metodoPagamento String? // DINHEIRO_FISICO | TRANSFERENCIA_BANCARIA (quando PAGO)
@@ -211,4 +217,52 @@ model RateLimit {
   resetAt DateTime
 
   @@index([resetAt])
+}
+
+// ---- Conteúdos editáveis no admin ----
+
+// Eventos da Agenda (e "Próximos eventos" na página inicial)
+model Evento {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  titulo    String
+  data      DateTime // dia do evento (meia-noite UTC)
+  descricao String?
+  imagemUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([data])
+}
+
+// Órgãos Sociais: um registo por cargo
+model OrgaoSocialMembro {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  orgao String // DIRECAO | ASSEMBLEIA_GERAL | CONSELHO_FISCAL
+  cargo String
+  nome  String
+  ordem Int    @default(0)
+
+  @@index([orgao, ordem])
+}
+
+// Participação nas Marchas Antoninas num ano
+model MarchaAno {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  ano           Int      @unique
+  tema          String?
+  descricaoCard String?
+  subtitulo     String?
+  classificacao Json?    // [{ pos, nome, pontos?, premios? }]
+  mensagem      String?
+  outros        Json?    // [{ titulo, texto }]
+  youtubeUrl    String?
+  updatedAt     DateTime @updatedAt
+}
+
+// Definições do site (ex.: chave "contactos")
+model SiteConfig {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  chave     String   @unique
+  valor     Json
+  updatedAt DateTime @updatedAt
 }
