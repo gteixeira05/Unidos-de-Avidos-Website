@@ -51,5 +51,10 @@
     "fsevents": true,
     "prisma": true,
     "unrs-resolver": true
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "^8.0.0"
+    }
   }
 }
