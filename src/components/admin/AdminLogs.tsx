@@ -245,33 +245,39 @@ export default function AdminLogs() {
               </div>
 
               <div className="mt-6 hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm md:block">
-                <table className="min-w-[980px] text-left text-sm">
+                <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Data</th>
                       <th className="px-4 py-3 font-semibold">Admin</th>
                       <th className="px-4 py-3 font-semibold">Ação</th>
-                      <th className="px-4 py-3 font-semibold">Entidade</th>
-                      <th className="px-4 py-3 font-semibold">ID</th>
-                      <th className="px-4 py-3 font-semibold">Descrição</th>
+                      <th className="w-full px-4 py-3 font-semibold">Descrição</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {logs.map((log) => (
-                      <tr key={log.id}>
+                      <tr key={log.id} className="align-top">
                         <td className="whitespace-nowrap px-4 py-3 text-gray-700">
                           {new Date(log.createdAt).toLocaleString("pt-PT")}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="font-medium text-gray-900">{log.actorName}</p>
+                          <p className="whitespace-nowrap font-medium text-gray-900">{log.actorName}</p>
                           <p className="text-xs text-gray-600">{log.actorEmail}</p>
                         </td>
-                        <td className="px-4 py-3 text-gray-700">{log.action}</td>
-                        <td className="px-4 py-3 text-gray-700">{log.entityType}</td>
-                        <td className="max-w-[220px] break-all px-4 py-3 font-mono text-xs text-gray-700">
-                          {log.entityId ?? "—"}
+                        <td className="px-4 py-3">
+                          <span className="inline-block whitespace-nowrap rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-800">
+                            {log.action}
+                          </span>
+                          <p className="mt-1 whitespace-nowrap text-xs text-gray-500">
+                            {log.entityType}
+                            {log.entityId && (
+                              <span className="font-mono" title={log.entityId}>
+                                {" "}· …{log.entityId.slice(-6)}
+                              </span>
+                            )}
+                          </p>
                         </td>
-                        <td className="max-w-[320px] px-4 py-3 text-gray-700">{log.description ?? "—"}</td>
+                        <td className="px-4 py-3 text-gray-700">{log.description ?? "—"}</td>
                       </tr>
                     ))}
                   </tbody>
