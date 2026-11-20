@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { lerPrecosDoBody, SELECT_PRECOS_ROUPA } from "@/lib/aluguerRoupasPublic";
 import { getSessionFromRequest } from "@/lib/auth";
 import { removeStoredMediaAsset } from "@/lib/media/remove-stored-asset";
+import { apagarVideoCloudinary } from "@/lib/media/cloudinary";
 import { logAdminAction } from "@/lib/admin-audit";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -115,6 +116,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       tema: true,
       imagemUrl: true,
       photos: { select: { imageUrl: true } },
+      videos: { select: { publicId: true } },
     },
   });
   if (!roupa) return Response.json({ error: "Roupa não encontrada." }, { status: 404 });
@@ -128,6 +130,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (roupa.imagemUrl) urls.add(roupa.imagemUrl);
   for (const p of roupa.photos) urls.add(p.imageUrl);
   await Promise.all([...urls].map((u) => removeStoredMediaAsset(u)));
+  await Promise.all(roupa.videos.map((v) => apagarVideoCloudinary(v.publicId)));
 
   const dir = path.join(process.cwd(), "public", "roupas", id);
   await rm(dir, { recursive: true, force: true }).catch(() => {});

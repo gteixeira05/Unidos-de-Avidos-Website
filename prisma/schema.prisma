@@ -65,6 +65,7 @@ model Roupa {
   disponibilidades  Disponibilidade[]
   reservas          Reserva[]
   photos            RoupaPhoto[]
+  videos            RoupaVideo[]
 }
 
 model RoupaPhoto {
@@ -265,4 +266,21 @@ model SiteConfig {
   chave     String   @unique
   valor     Json
   updatedAt DateTime @updatedAt
+}
+
+// Vídeos de uma roupa (guardados no Cloudinary, enviados diretamente do browser)
+model RoupaVideo {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  roupaId   String   @db.ObjectId
+  roupa     Roupa    @relation(fields: [roupaId], references: [id], onDelete: Cascade)
+  url       String   // secure_url original no Cloudinary
+  publicId  String
+  titulo    String?
+  duracao   Float?   // segundos
+  largura   Int?
+  altura    Int?
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([roupaId, ordem])
 }

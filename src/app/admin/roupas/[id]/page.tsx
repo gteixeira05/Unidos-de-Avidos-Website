@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import AdminTitulo from "@/components/admin/AdminTitulo";
 import AdminRoupaFotosManager from "@/components/admin/AdminRoupaFotosManager";
 import AdminRoupaInlineEditor from "@/components/admin/AdminRoupaInlineEditor";
+import AdminRoupaVideosManager from "@/components/admin/AdminRoupaVideosManager";
 import EliminarRoupaBotao from "@/components/admin/EliminarRoupaBotao";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export default async function AdminEditarRoupaPage({ params }: { params: Promise
       </Link>
       <AdminTitulo
         titulo={`${roupa.ano} · ${roupa.tema}`}
-        descricao="Preços, textos, stock, fotos e disponibilidade."
+        descricao="Preços, textos, stock, fotos, vídeos e disponibilidade."
         acoes={
           <div className="flex flex-wrap gap-2">
             <Link
@@ -36,6 +37,7 @@ export default async function AdminEditarRoupaPage({ params }: { params: Promise
         }
       />
       <AdminRoupaFotosManager roupaId={roupa.id} initialCoverUrl={roupa.imagemUrl} />
+      <AdminRoupaVideosManager roupaId={roupa.id} />
       <AdminRoupaInlineEditor
         roupa={{
           ...roupa,

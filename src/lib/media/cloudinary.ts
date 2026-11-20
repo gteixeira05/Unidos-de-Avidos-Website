@@ -151,3 +151,41 @@ export function dngFallbackCloudinaryFolder(kind: "galeria-cover" | "galeria-pho
   }
   return prefix;
 }
+
+// ---------- Vídeos (upload direto do browser, assinado pelo servidor) ----------
+
+/** Parâmetros assinados para o browser enviar um vídeo diretamente para o Cloudinary. */
+export function assinarUploadVideo(folder: string, eager: string) {
+  const c = getCloudinary();
+  if (!c) return null;
+  const cfg = c.config();
+  const timestamp = Math.round(Date.now() / 1000);
+  const params = { eager, eager_async: "true", folder, timestamp };
+  const signature = c.utils.api_sign_request(params, cfg.api_secret!);
+  return { cloudName: cfg.cloud_name!, apiKey: cfg.api_key!, signature, ...params };
+}
+
+/** Confirma no Cloudinary que o vídeo existe (e devolve os dados reais). */
+export async function obterVideoCloudinary(publicId: string) {
+  const c = getCloudinary();
+  if (!c) return null;
+  try {
+    // media_metadata: sem isto o Cloudinary não devolve a duração.
+    const r = await c.api.resource(publicId, { resource_type: "video", media_metadata: true });
+    return {
+      secureUrl: r.secure_url as string,
+      duracao: (r.duration as number | undefined) ?? null,
+      largura: (r.width as number | undefined) ?? null,
+      altura: (r.height as number | undefined) ?? null,
+      bytes: r.bytes as number,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function apagarVideoCloudinary(publicId: string): Promise<void> {
+  const c = getCloudinary();
+  if (!c) return;
+  await c.uploader.destroy(publicId, { resource_type: "video", invalidate: true }).catch(() => {});
+}

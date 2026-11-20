@@ -5,6 +5,7 @@ import CalendarioDisponibilidade from "./CalendarioDisponibilidade";
 import FormularioReserva from "./FormularioReserva";
 import RoupaDetailAdminSection from "@/components/RoupaDetailAdminSection";
 import RoupaFotosGaleria from "@/components/RoupaFotosGaleria";
+import { formatarDuracao, proporcaoVideo, urlCapaVideo, urlVideoOtimizado } from "@/lib/media/video-urls";
 import { getContactos, getMarchas, tituloAluguer, whatsappUrl } from "@/lib/conteudos";
 import { PrecoAluguerRoupa, StockFardasDetalhe, PoliticaCaucao } from "@/components/AluguerRoupasInfoPublic";
 import { precoReferencia, temCalcado } from "@/lib/aluguerRoupasPublic";
@@ -67,6 +68,7 @@ export default async function RoupaDetalhePage({
     where: { id },
     include: {
       photos: { orderBy: [{ order: "asc" }, { createdAt: "asc" }] },
+      videos: { orderBy: [{ ordem: "asc" }, { createdAt: "asc" }] },
     },
   });
 
@@ -181,6 +183,46 @@ export default async function RoupaDetalhePage({
               imagemUrl={roupa.imagemUrl}
             />
           </section>
+
+          {roupa.videos.length > 0 && (
+            <section className="min-w-0">
+              <h2 className="text-base font-semibold tracking-tight text-gray-900 sm:text-lg">Vídeos</h2>
+              <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-gray-500">
+                Veja a roupa em movimento e com mais pormenor.
+              </p>
+              <div className={`mt-4 grid gap-4 ${roupa.videos.length > 1 ? "sm:grid-cols-2" : ""}`}>
+                {roupa.videos.map((v) => {
+                  // Vídeos verticais: altura fixa e largura proporcional, sem faixas pretas.
+                  const vertical = !!v.largura && !!v.altura && v.altura > v.largura;
+                  return (
+                  <figure
+                    key={v.id}
+                    className={`min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ${vertical ? "mx-auto w-fit max-w-full" : ""}`}
+                  >
+                    <video
+                      src={urlVideoOtimizado(v.url)}
+                      poster={urlCapaVideo(v.url)}
+                      controls
+                      preload="none"
+                      playsInline
+                      style={{ aspectRatio: proporcaoVideo(v.largura, v.altura) }}
+                      className={`block bg-black ${vertical ? "h-[min(75vh,640px)] w-auto max-w-full" : "w-full"}`}
+                      aria-label={v.titulo ?? `Vídeo da roupa de ${roupa.ano}`}
+                    />
+                    {(v.titulo || v.duracao) && (
+                      <figcaption className="flex items-center justify-between gap-2 px-3 py-2 text-sm text-gray-700">
+                        <span>{v.titulo}</span>
+                        {v.duracao ? (
+                          <span className="text-xs tabular-nums text-gray-500">{formatarDuracao(v.duracao)}</span>
+                        ) : null}
+                      </figcaption>
+                    )}
+                  </figure>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           <RoupaDetailAdminSection
             serverIsAdmin={false}

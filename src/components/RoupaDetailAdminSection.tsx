@@ -2,6 +2,7 @@
 
 import AdminRoupaInlineEditor from "@/components/admin/AdminRoupaInlineEditor";
 import AdminRoupaFotosManager from "@/components/admin/AdminRoupaFotosManager";
+import AdminRoupaVideosManager from "@/components/admin/AdminRoupaVideosManager";
 import { useResolvedAdmin } from "@/hooks/useResolvedAdmin";
 import type { PrecosRoupa } from "@/lib/aluguerRoupasPublic";
 
@@ -34,6 +35,7 @@ export default function RoupaDetailAdminSection({
   return (
     <>
       <AdminRoupaFotosManager roupaId={roupaId} initialCoverUrl={initialCoverUrl} />
+      <AdminRoupaVideosManager roupaId={roupaId} />
       <AdminRoupaInlineEditor
         roupa={{ ...editorRoupa, tema: editorRoupa.tema ?? "" }}
       />
